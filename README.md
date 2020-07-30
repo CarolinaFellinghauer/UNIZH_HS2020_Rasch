@@ -5,6 +5,8 @@ Recommended litterature, Power point presentation shown and HTML Workbooks used 
 
 Course participants are invited to submit there homework via Github or OLAT.
 
-Just adding a change...
- whatever
- 
+******Intro_Welcome_Power_Point : 
+     $$add room and dates on slide 7
+     $$add github and olat link on slide 9
+     
+     
