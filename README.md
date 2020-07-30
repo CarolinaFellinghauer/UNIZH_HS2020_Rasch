@@ -3,4 +3,6 @@ The Github link : https://github.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/ co
 
 Recommended litterature, Power point presentation shown and HTML Workbooks used in the course are also found here - as well as in the OLAT.
 
-Course participants are invited to submit there homework via Github or OLAT. 
+Course participants are invited to submit there homework via Github or OLAT.
+
+Just adding a change...
