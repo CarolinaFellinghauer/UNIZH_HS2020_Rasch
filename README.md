@@ -6,3 +6,5 @@ Recommended litterature, Power point presentation shown and HTML Workbooks used 
 Course participants are invited to submit there homework via Github or OLAT.
 
 Just adding a change...
+ whatever
+ 
