@@ -6,7 +6,11 @@ Recommended litterature, Power point presentation shown and HTML Workbooks used 
 Course participants are invited to submit there homework via Github or OLAT.
 
 ******Intro_Welcome_Power_Point : 
-     $$add room and dates on slide 7
-     $$add github and olat link on slide 9
+
+     - add room and dates on slide 7  \
+     - add github and olat link on slide 9 \
+     
+
+Note: Open Power Point PDF Presentation with the WACOM to make annotations. Open a copy of the original document.
      
      
