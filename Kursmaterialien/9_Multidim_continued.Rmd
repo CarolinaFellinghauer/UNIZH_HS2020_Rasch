@@ -1,0 +1,320 @@
+---
+title: "9 Multidimensionality: Continued"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- ~
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "05.08.2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep = TRUE,
+                      comment = NA)
+library(citr)
+library(bookdown)
+
+library(rgl) #library for 3-dimensional plotting functions
+
+options(rgl.useNULL = TRUE)
+knitr::knit_hooks$set(webgl = hook_webgl)
+
+```
+
+# Multidimensional Rasch Model
+
+In practice, the unidimensionality assumption does not always hold and a latent trait can be deconstructed into subcomponents. The Rasch model has been developed to accommodate various assessment situations were the data is unidimensional. 
+In the 1990's, an extension of the Rasch model was proposed named the *Multidimensional Random Coefficient Multinomial Logit (MRCML)* model [@adamsMultidimensionalRandomCoefficients1997a]. Free software tools to do this type of analyses only appeared around 2015, with the R-package TAM [@kieferTAMTestAnalysis2014]. 
+ 
+Despite its greater computational complexity, the form of the multidimensional PCM model with Q dimensions can be written in very similar fashion to the unidimensional PCM  
+
+$$P(X_{ikn} = k | \theta_{nq}) = 
+  \frac{exp{(\theta_{nq} - \delta_{ik})}}
+        {\Sigma^{m_i}_{c=0} exp \Sigma_{h=0}^{c} (\theta_{nq} - \delta_{ik})}$$
+
+
+Two type of multidimensional Rasch models are available, the *"between-item multidimensionality"* and *"within-item multidimensionality"*, which differ in their conceptualization of the loading structure. In the first approach, each item belongs to one dimension. In the second approach, cross-loading is allowed and items can belong to more than dimension [@adamsMultidimensionalRandomCoefficients1997a]. 
+
+The multidimensional Rasch model is not an explorative analytic approach that is searching for a model with a dimensional structure. It is a *confirmatory approach*, where ahead, the user has to have assumptions about the dimensions  of the instrument to calibrate. 
+
+Multidimensional modeling assumes that an assessment tool describes more than one single latent trait. Brigg writes that "*the art of assessing dimensionality is to find the smallest number of latent ability domains such that they are both statistically well-defined and substantially meaningful*" (REF: Briggs and Wilson 2003, Journal of Applied Measurement An introduction to Multidimensional Measurement using Rasch Models pp 87-100). Parsimoniously selecting the amount of dimensions benefit the item scoring and test administration. 
+
+
+The fit of various nested models with increasing number of dimensions can be compared with the likelihood ratio test, to determine which model fits best. This allows to and make informed decisions on the number of dimensions to retain.
+
+
+
+
+The library ´eRm´ does not have any functions for multidimensional analysis. Instead, the library ´TAM´or ´mirt´ can be used, this lesson will focus on ´mirt´. But before starting, as they differ, let's briefly spend a few lines on the estimation methods used by these packages.
+
+Different methods to estimate Rasch parameter can be found: Joint Maximum Likelihood (JML), Conditional Maximum Likelihood (CML), Marginal Maximum Likelihood (MMLE), and Bayesian (e.g. Expected A Posteriori, EAP) estimation. All methods base on the likelihood function, i.e. the probability of the observed data as a function of unknown parameter.
+
+$$L_{u_{ni}} (\theta_n, \delta_i) = P(U_{ni} = u_{ni} | \theta_n, \delta_n) = \frac{exp(u_{ni} \cdot (\theta_n - \delta_n))}{1 + exp(\theta_n - \delta_n)}$$
+
+Let's briefly introduce two of these estimation methods, CML and MML, and mention the critical standpoint of some Rasch purists in this regard and when it may matter.
+
+# Conditional Maximum Likelihood 
+
+Conditional Maximum Likelihood (CML) is by far the preferred estimation method by the classical Rasch methodologists. This approach bases only on what can be observed in the data. CML 'simply' replaces each test taker's person parameter with their corresponding sum score. 
+CML is a two step approach, computing (1) the item difficulty parameter regardless of the person abilities, and only then (2) estimates the person parameter conditionally to the item parameter estimated in (1).
+
+In the CML estimation, the person's row score $r_p$ is a sufficient statistic for their person parameter $\theta_p$ and the likelihood of a row score can be expressed as
+
+$$L_u(r,\delta) = \frac{exp(-\Sigma^I_{i=1} c_i \cdot \delta_i)}{\prod^N_{n=1} \gamma_{r_n} (\delta) }$$ 
+
+The $c_i$ corresponds of the column sums and $\gamma_{r_n} (\delta) = \Sigma_{{u_n}\in \Gamma_n} (-\Sigma^I_{i = 1} u_{ni} \cdot \delta_i)$ to the sum of the products The item parameters are estimated by finding the value of $\delta$ that maximizes the conditional likelihood.!!!!*FIND BEtter short explanantion for the lower part of the fraction*
+To solve such an equation requires numerical methods as implemented for example in the function ´PCM()´ that was used in the previous lessons.
+
+The details on how to come up with this likelihood function is fully described Strobl Buch das Rasch Modell
+
+
+# Marginal Maximum Likelihood
+
+As CML, Marginal  Maximum Likelihood (MML) is not accounting for the person parameter ($\theta$) to estimate the item difficulty ($\delta$), but in this approach, the person parameter are 'averaged out'.
+
+MML estimation requires a marginal, or population, distribution for the person parameter. This distribution expresses the relative probability of each possible ability parameters. A common choice of population distribution for the person parameters is the normal distribution. This makes sense when we can assume a symmetric distribution where the majority of people have person parameters near the mean. 
+
+Just like CML, MML estimates the person parameter in a second step, often called *scoring*. 
+
+The package ´mirt´ uses MML to estimate unidimensional and multidimensional Rasch models, while ´eRm´ uses the CML which bases on the observed row scores without any distributional assumptions. That is why the CML methods is the prefered approach for measurement purists. 
+
+# Getting ready
+
+Loading the MDS data.
+
+```{r sample size, warning = FALSE, message = FALSE, comment = FALSE}
+library(eRm)
+library(mirt)
+
+# get the MDS dataset from GitHub
+
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/WHO_MDS_course.csv?token=AB5GB46B55WMO5AU74G4CKK7K5JSG"
+
+MDS.data=read.csv(url(urlfile), sep = ";")
+colnames(MDS.data)
+
+# Select only the MDS items, these are all columns except the first four. 
+# It starts with vision.
+
+mds.items=colnames(MDS.data)[-(1:4)]
+
+data.mds=MDS.data[, mds.items]
+data.mds=data.mds-1
+
+```
+
+# Diagnostics
+
+Now that this has been clarified let's start with the multidimensional Rasch analysis with library ´mirt´.
+The unidimensional Rasch model, including the Partial Credit Model, can be run simply by specifying the option ´itemtype = Rasch´.
+ 
+```{r Unidimensional_Rasch_Model, warning = FALSE, comment = FALSE, error = FALSE}
+
+
+mds.1dim =mirt(data.mds, 1, itemtype = "Rasch", verbose = FALSE)
+
+```
+ 
+Based on the previous lesson, the items which go in dimension 1 or dimension 2 are determined through their loading sign on the first principal component. 
+The package ´mirt´ does not provide the analysis residuals as ´eRm´ does, but it provides the residual correlation matrix, the Q3-statistic, which is sufficient to do a PCA with ´prcomp()´ which requires as input the data's correlation matrix. 
+
+```{r, mirt_Q3_prcomp, error = FALSE, warning = FALSE, comment = FALSE, echo = TRUE}
+
+cor.mds = residuals(mds.1dim, type = "Q3", verbose = FALSE) #gives the correlation of the standardized residuals
+
+PCA.mds = prcomp(cor.mds, center=TRUE, retx=TRUE)  #PCA
+which(PCA.mds$rotation[,"PC1"]<0) # negative sign on PC1
+which(PCA.mds$rotation[,"PC1"]>0) # positive sign on PC1
+```
+
+
+The signs of the first PC1 help determining which items fall into which dimension. 
+
+- Dimension 1: Vision (1), Hearing (2), Memory (4), Communication (6), HandUse (12), Sleeping (13), Breathing (14), Depressivity (18), Anxiety (19), GettingAlong (20), Pain (22)
+
+- Dimension 2: Walking (3), Dressing (5), Feeding (7), Toileting (8), Bed (9), GoingOut (10), Shopping (11), Household (15), Caring (16), Participating (17), Managing (21)
+
+This finding is also consistent with what was found earlier, when doing the PCA with the correlation of the standardized residuals computed with the package ´eRm´ (Exercise: *8: Multidimensionality*).
+
+The function ´mirt()´ allows to fit the IRT model. Rasch analysis in ´mirt´ works only for unidimensional models. For multidimensional models, the closest parameterization to the Partial Credit Model is ´gpcm´, the Generalized Partical Credit Model (GPCM). The GPCM from Muraki [@murakiGPCM1992] is an IRT model, more specifically a 2-PL model, where the item discrimination slope is allowed to vary across items. 
+
+The GPCM is an extension of the PCM model (and so also of the RSM) with itemwise unconstrained slope parameter, i.e. with an additional parameter for the item discrimination $a_i$. It uses a score category response function to estimate the probability of a response $X_{ijk}$ and is formalized as: 
+
+$$P(X_{ikj}= k | \theta_j) = 
+    \frac{exp \Sigma_{h=0}^k a_i(\theta_j - \delta_{ik})}
+      { \Sigma^{m_i}_{c=0} exp \Sigma_{h=0}^{c}[a_i(\theta_j - \delta_{ik})]}$$
+      
+or parameterized with location ($\delta$) plus deviation ($\lambda$):
+
+$$P(X_{ikj} = k | \theta_j) = 
+        \frac{exp \Sigma_{h=0}^k a_i(\theta_j - \delta_{i} + \lambda_{ik})}
+              {\Sigma^{m_i}_{c=0} exp \Sigma_{h=0}^{c}[a_i(\theta_j - \delta_{i} + \lambda_{ik})]}$$
+
+
+However, it is possibly to obtain a PCM parameterization, by constraining the item discrimination $a_i$ to be 1 for all items. The following code presets the parameterization for a 2 dimensional Rasch model with the items in two dimension as found with the PCA previously. 
+
+
+```{r fixing_slopes}
+
+ spec1 <- "
+              F1 = 1, 2, 4, 6, 12, 13, 14, 18, 19, 20, 22
+              F2 = 3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21
+              START = (1, 2, 4, 6, 12, 13, 14, 18, 19, 20, 22, a1, 1.0)
+              START = (3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21, a2, 1.0)
+              FIXED = (1, 2, 4, 6, 12, 13, 14, 18, 19, 20, 22, a1)
+              FIXED = (3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21, a2)
+              FREE = (GROUP, COV11)
+              FREE = (GROUP, COV22)
+              COV = F1*F2 "
+  
+```
+
+
+```{r, warning = FALSE, comment = FALSE, error = FALSE}
+
+mds.2dim = mirt(data.mds, model = spec1, itemtype = "gpcm", verbose = FALSE)
+
+```
+
+Nested models can be compared using among others Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) where smaller values indicate a better fit and the likelihood ratio test (X2) indicate if the change in fit is significant.
+
+```{r, error = FALSE, comment = FALSE, warning = FALSE}
+
+anova(mds.1dim, mds.2dim, verbose = FALSE)
+
+```
+
+The likelihood ratio test is highly significant, indicating that the fit, improved signficantly from one to two-dimensional model, as the AIC estimates become smaller in the 2 dimensional model.
+
+The next step wants to test if a 3 dimensional approach is even better. First, we visually inspect the items to determine with items belong to which dimension. 
+This is an iterative approach, a little bit of trial and error based on the visual analysis outputs.
+
+
+The loading on the principal components give us the best indication on which items belong together. 
+
+```{r Loadings}
+
+PCA.mds$rotation[, c(1:3)]
+```
+
+
+First, let's observe again the 2 dimensional principal component plot. 
+
+
+```{r 2_dimensional_plott, fig.height = 5, fig.cap = "Figure 3", fig.align = 'center', echo = FALSE}
+
+
+plot(PCA.mds$rotation[,1], PCA.mds$rotation[,2], xlab="1st component", ylab="2nd component", main="MDS Item PCA-Loading", col="white")
+
+text(PCA.mds$rotation[,1], PCA.mds$rotation[,2], rownames(PCA.mds$rotation), cex=0.7)
+
+```
+
+
+and complement the information with a 3-dimensional representation of the loadings of the 3 first principal components.
+
+
+```{r 3Dimensional, webgl = TRUE}
+
+
+  Dataset=as.data.frame(PCA.mds$rotation)
+  Dataset=cbind(id=rownames(Dataset), Dataset)
+  
+  plot3d(Dataset$PC1, Dataset$PC2, Dataset$PC3, 
+         xlab = "PC1", ylab = "PC2", zlab = "PC3",
+         type = "s", radius = 0.00, col="white")
+  text3d(Dataset$PC1, Dataset$PC2, Dataset$PC3, texts = rownames(Dataset))
+
+  
+```
+
+
+
+To find the best 3-dimensional design may require additional testing. For the example, and based on the component loadings and the 3-dimensional graphical visualization.
+
+- Dimension 1: Memory (4), Communication (6), HandUse (12), GettingAlong (20)
+
+- Dimension 2: Vision (1), Hearing (2), Sleeping (13), Breathing (14),        Depressivity (18), Anxiety (19), Pain (22)
+
+- Dimension 3: Walking (3), Dressing (5), Feeding (7), Toileting (8), Bed (9), GoingOut (10), Shopping (11), Household (15), Caring (16), Participating (17), Managing (21)
+
+Here again, to do the Rasch analysis the item slope parameter have to be fixed.
+
+```{r fixing_slopes2}
+
+
+ spec2 <- "
+              F1 = 4, 6, 12, 20
+              F2 = 1, 2, 13, 14, 18, 19, 22
+              F3 = 3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21
+              START = (4, 6, 12, 20, a1, 1.0)
+              START = (1, 2, 13, 14, 18, 19, 22, a2, 1.0)
+              START = (3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21, a3, 1.0)
+              FIXED = (4, 6, 12, 20, a1)
+              FIXED = (1, 2, 13, 14, 18, 19, 22, a2)
+              FIXED = (3, 5, 7, 8, 9, 10, 11, 15, 16, 17, 21, a3)
+              FREE = (GROUP, COV11)
+              FREE = (GROUP, COV22)
+              FREE = (GROUP, COV33)
+              COV = F1*F2, F1*F3, F2*F3"
+  
+```
+
+
+The Rasch model is computed
+
+```{r}
+
+mds.3dim = mirt(data.mds, model = spec2, itemtype = "gpcm", verbose = FALSE)
+
+```
+
+```{r}
+anova(mds.2dim, mds.3dim)
+```
+
+Three dimensional is even better than two dimensional, the AIC becomes smaller with 3 dimensions, the $X2$ supports the change is significant. 
+
+This lesson showed how a model structure could be selected using the multidimensional Rasch model and the likelihood ratio test to compare nested models. However, in practice, the model is not only selected based on the best model fit. Other model characteristics such as the item fit for example or the reliability are also important to account for.
+
+Note that the reliability of the models can be found using ´empirical_rxx()´:
+
+```{r}
+empirical_rxx(fscores(mds.1dim, full.scores.SE = TRUE))
+empirical_rxx(fscores(mds.2dim, full.scores.SE = TRUE))
+empirical_rxx(fscores(mds.3dim, full.scores.SE = TRUE))
+```
+
+and the item fit can be extracted using ´itemfit()´:
+
+
+```{r}
+itemfit(mds.1dim, fit_stats = "infit")
+itemfit(mds.2dim, fit_stats = "infit")
+itemfit(mds.3dim, fit_stats = "infit")
+```
+
+##check if the LID matrix can still be extracted for multidim models...
+
+<div class="alert alert-info"> 
+
+Exercise:
+Challenge : Find a better fitting 3 dimensional model using the MDS-data. 
+
+</div>
+
+
+

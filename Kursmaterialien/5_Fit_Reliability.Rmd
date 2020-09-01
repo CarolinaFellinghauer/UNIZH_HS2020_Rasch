@@ -1,0 +1,275 @@
+---
+title: "Targeting and Reliability"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- 
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "25 5 2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep=TRUE,
+                      fig.width=4, fig.height=4, comment=NA)
+library(citr)
+library(bookdown)
+
+```
+
+
+# Getting ready
+
+If the packages are not ready installed on your computer run the package installation file.
+Then we include the libraries:
+
+```{r, warning=FALSE, message=FALSE}
+
+
+#install and load following R-packages  
+library(eRm)
+library(iarm)
+library(PP)
+library(rms)
+library(R2R)
+library(splines)
+
+
+```
+
+and load the Stress Related Growth data (SRG) :
+
+
+```{r, dataload and analysis, warning = FALSE}
+
+# get the SRG dataset from GitHub
+
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/SRG_Data_Course_UNIZH.csv?token=AB5GB47UIUWV7F5NMGA33T27K5IQ2"
+
+srg.data=read.csv(url(urlfile))
+
+dim(srg.data)
+colnames(srg.data)
+
+srg.items=c("SRG1", "SRG2",  "SRG3",  "SRG4",  "SRG5",  "SRG6",  "SRG7",  "SRG8",  "SRG9", "SRG10", "SRG11", "SRG12", "SRG13", "SRG14", "SRG15")
+
+
+# dataset with only the SRG items
+data.srg=srg.data[,srg.items]
+
+#check response coding (frequencies including missing values) for each SRG-item
+apply(data.srg, 2, table, useNA="always")
+
+```
+
+
+
+
+
+# Targeting
+
+Targeting indicates the degree to which the study population is outside the target range of the scale items.
+
+
+
+![Item Person Targeting](Targeting.png){width=20%}
+
+The Rasch analysis using function `PCM()` from the R-package `erm` fix the item difficulties per default to a mean of zero (`sum0 = TRUE`). For a well-targeted scale (not too easy, not too difficult) the mean location for the persons is then expected to be around zero too.
+
+If a positive mean value for the persons is obtained, the sample as a whole was located at a higher level than the average of the scale. A negative value suggests the opposite, the persons are below the level of the scale. If many respondents are at the margins, then the scale is not properly targeted.
+
+
+Targeting can be verified numerically and graphically. 
+
+
+
+## Numeric Output Analysis
+
+Typically, the analysis of the quality of the targeting of the scale for a population compares the mean person ability estimate with the mean item difficulty. With good targeting both should be close to zero.
+
+
+
+
+```{r PCM and targeting, message=FALSE, warning=FALSE, comment=NA}
+
+#starting with the PCM analysis
+PCM.srg = PCM(data.srg)
+
+
+##Find the difficulty parameter of the items (=Location in eRm) and calculate 
+##the mean and sd
+
+i.dif.srg = PCM.srg$betapar
+mean.dif.srg = mean(i.dif.srg)
+sd.dif.srg = sd(i.dif.srg)
+
+##Find the ability of the persons and calculate the mean and sd 
+
+pp.srg <- person.parameter(PCM.srg)
+abil.srg <- pp.srg$theta.table[,"Person Parameter"]
+mean.abil.srg=mean(abil.srg)
+sd.abil.srg=sd(abil.srg)
+
+##rounded mean and sd difficulties and abilities
+summary.targeting.srg <- c(Mean_Difficulty=mean.dif.srg, SD_Difficulty=sd.dif.srg, 
+                    Mean_Abilities=mean.abil.srg, SD_Abilities=sd.abil.srg)
+
+round(summary.targeting.srg,3)
+
+```
+
+
+Here the analysis of the targeting shows that scale is well-targeted, the mean abilities of the persons are close to zero and the item difficulties too, of course, as it is the default setting of the analysis.
+
+
+## Visual Analysis
+
+The graphical testing of targeting includes the person item map as implemented in `eRm` with the function `plotPImap()`, i.e. plots of the distribution of item difficulty parameters and person ability parameters. 
+
+
+```{r person item map, comment=NA,fig.align="center"}
+
+plotPImap(PCM.srg, sorted = TRUE)
+
+```
+
+The analysis of the targeting with the person item map is approximative. It is important to look at difficulty range of the items and their coverage of the person ability continuum. Are many person ability estimates outside of the item difficulty range?
+
+
+# Reliability
+
+
+Reliability, in the context of Modern Test Theory, is an estimate of the precision of the person ability estimates.
+The Person Separation Reliability (PSR), calculates the proportion of person variance that is not due to error. The concept of person separation reliability is very similar to reliability indices such as Cronbach's $\alpha$ and is interpreted in a same way.
+The interpretation of the person separation reliability may vary, but in general it is agreed on that a reliablity is very good if the PSR is close to 1, good if > 0.85 and sufficient if > 0.7.
+
+The PSR reported by most Rasch computer programs is calculated by subtracting the ratio of the sample mean square person measure error ($MSE_p$) to the sample person measure variance ($SD_p^2$) from one [@wrightRatingScaleAnalysis1982]:
+
+
+$$PSR=1-\left[\frac{MSE_p}{SD^2_p}\right]$$
+
+
+## Numeric Output Analysis
+
+The R-package `eRm` informs about the persons separation with the function `SepRel()` which can be applied on the `person.parameter()` output. 
+
+
+```{r person separation, comment=NA}
+
+SepRel(pp.srg)
+
+```
+
+The scale at this stage, has good reliability ($PSR = 0.9$). 
+The reliability of a scale cannot be investigated visually to our knowledge. Note that in many publications the PSR is abbreviated by PSI, Person Separation Index.
+
+
+
+# The information function
+
+
+In statistics and psychometrics, the term information is defined as the reciprocal of the precision with which a parameter could be
+estimated http://echo.edres.org:8080/irt/baker/chapter6.pdf. 
+
+If a parameter is estimated with more precision, more is known about it statistically (than if estimated with less precision).  
+Statistically, the precision with which a parameter is estimated is
+measured by the variability of the estimates around the value of the parameter ($\sigma^2$). The amount of information, denoted by $I$ and is given by the formula:
+
+
+
+$$ I = \frac{1}{\sigma^2} $$
+
+
+The person ability parameter is denoted by $\theta$, and $\hat{\theta}$ its estimation. The output for `person.parameter`computed previously (`pp.srg`) the $\hat{\theta}$ but also its measurement precision $\sigma_{\hat\theta}$. If $\sigma_{\hat\theta}$ is squared, it becomes a variance $\sigma_{\hat\theta}^2$ and is a measure of precision for an ability level. The precision,  $\sigma_{\hat\theta}^2$ , can be used to calculate the the amount of information. If this value is large, it means that an examinee whose true ability is at that level can be estimated with precision; i.e., all the estimates will be reasonably close to the true value. If the amount of information is small, it means that the ability cannot be estimated with precision and the estimates will be widely scattered around the true ability. Because ability is a continuous variable, information will also be a continuous variable. 
+
+
+
+## Numeric Output Analysis
+
+The function `test_prop()` in R-package `iarm` makes available reliability and also targeting indices derived from a Rasch analysis with the package `eRm`: 
+  
+  1. The separation reliability : identical to the PSI computed with `SepRel()` in the R-package `eRm`
+  2. Test difficulty: person value with an expected score equal to half of the maximum score.
+  3. Test target index: The minimum standard error of measurement divided by the mean standard error of measurement, which is expected close to one for good targeting. Person value where test information is maximized. 
+  4. Test information: the ratio of the mean and max test information.
+
+
+
+
+```{r reliability, message=FALSE, warning=FALSE, comment=NA}
+
+##check the data distribution.
+
+round(test_prop(PCM.srg),3)
+
+```
+
+
+## Visual Analysis
+
+If the amount of information is plotted against ability, the result is a graph of the information function such as that shown below.
+
+```{r information_graphic}
+
+
+plot(pp.srg$thetapar$NAgroup1, 
+     1/pp.srg$se.theta$NAgroup1^2, type="p", xlab="Ability",    
+     ylab="Information", main = "Information Function")
+
+```
+
+
+Adding a segment where the precision is the highest, i.e. the error is smallest. The value were the segment touches the curve corresponds to the test information value computed previously with 
+`test_prop()`.
+
+```{r}
+
+# where is the smallest se.theta value
+Minimum=which.min(pp.srg$se.theta$NAgroup1)
+
+plot(pp.srg$thetapar$NAgroup1, 
+     1/pp.srg$se.theta$NAgroup1^2, type="p", xlab="Ability",  
+     ylab="Information", main = "Information Function")
+
+segments(pp.srg$thetapar$NAgroup1[Minimum], 1,
+         pp.srg$thetapar$NAgroup1[Minimum], 6,
+         col = "red", lty="dotted")
+
+```
+
+
+This figure is also directly implemented in `eRm` with the `plotINFO()`function which visualizes both the information at item and at test level. 
+
+```{r InfoPlot, fig.width = 5}
+
+eRm::plotINFO(PCM.srg, type = "item", legpos = FALSE)
+
+```
+
+
+Note that other R-packages or other Rasch software propose further statistics to describe the fit of a Rasch model. 
+
+
+<div class="alert alert-danger"> 
+# Exercise
+
+The sample contains persons with different characteristics. Are there subgroups for which the general targeting of the scale is more adequate. Compare the mean ability of persons with \
+a) tetraplegia and with paraplegia, \
+b) males and females,  \
+c) traumatic and non-traumatic injuries. \
+</div>
+
+# References

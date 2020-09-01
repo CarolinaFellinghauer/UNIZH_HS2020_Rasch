@@ -1,0 +1,246 @@
+---
+title: "10 Multidimensionality: Continued II"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- ~
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "06.08.2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep = TRUE,
+                      comment = NA)
+library(citr)
+library(bookdown)
+
+library(rgl) #library for 3-dimensional plotting functions
+
+options(rgl.useNULL = TRUE)
+knitr::knit_hooks$set(webgl = hook_webgl)
+
+```
+
+
+# Getting ready
+
+If the packages are not ready installed on your computer run the package installation file. Then we include the libraries:
+
+```{r libraries, warning = FALSE, message = FALSE}
+library(mirt)
+
+```
+
+
+# Multidimensionality
+
+Also, a test form should measure only one construct. Multidimensionality indicates that the ability of test respondent is not on one continuum across the test questions. If several separate dimensions are included, the validity of one summary total score is not supported. In presence of multidimensionality, the different dimensions measure aspects of the latent trait that do not align. In that sense, if multidimensionality holds, the ability that is measured are supposed to differ significantly across the dimensions. 
+
+# Diagnostics
+
+As shown previously, unidimensionality can be examined with a Principal Component Analysis (PCA) of the standardized Rasch residuals [@smithDetectingEvaluatingImpact2002]. If unidimensionality holds, no factor structure should be found in the residuals. 
+
+The absence of two distinct dimensions can be tested statistically with t-tests comparing pairs of ability estimates from separate Rasch calibration of the 2 sets of items, either loading positively ($PC^+$) or negatively ($PC^-$) on the first component of the PCA. The test is carried out for each $\hat{\theta}$ pair using the standard t-test formula:
+
+$$t_{(1,\infty)} =\frac{ \hat{\theta}_{PC^+} - \hat{\theta}_{PC^-} }
+                              {\sqrt{\hat{\sigma}^2_{PC^+} + \hat{\sigma}^2_{PC^-} }    } $$\
+
+The percentage of significant t-tests should not exceed 5% [@andrichCourseRaschMeasurement]. 
+
+However, this approach requires to apply a technique called *anchoring*. 
+
+Comparing the ability estimates from two separate unidimensional analysis of the items loadings either negatively or positively on the first component is statistically not sound, as the ability estimates cannot be expected to adress the same continuum.
+
+In very detail, the correct way to go is to: 
+
+1) Run a unidimensional Rasch analysis will all the items.
+2) Determine the dimensions, i.e. those which loaded negatively or positively on the first component of the PCA.
+3) Set aside the common item parameter estimates.
+4) Anchor the items from each dimension on the parameter estimates for these items found in 2).
+5) Run separate anchored analyses.
+6) Make a t-test (based on formula) for each pair of ability estimates. 
+7) Find the proportion of pairs of ability estimates with significant t-test ($|t-value| > 2.5$).
+8) If the proportion is > 5%, unidimensionality must be rejected.
+
+Unfortunately, ´eRm´ does not allow to anchor item difficulty estimates. Fortunately, ´mirt´ does. 
+
+## Numeric Output analysis
+
+Let's go through this test step by step using, as previously, the MDS dataset. 
+
+```{r sample size, warning = FALSE, message = FALSE, comment = FALSE}
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/WHO_MDS_course.csv?token=AB5GB4Z6VXD7GLH7H4YNXNC7GUNGU"
+
+MDS.data=read.csv(url(urlfile))
+
+dim(MDS.data)
+
+colnames(MDS.data)
+
+# Select only the MDS items, these are all columns except the first four. 
+# It starts with vision.
+
+mds.items=colnames(MDS.data)[-(1:4)]
+
+data.mds=MDS.data[, mds.items]
+data.mds=data.mds-1
+```
+
+
+**1)** Run a unidimensional Rasch analysis will all the items.
+
+```{r unidimensional}
+
+mds.1dim =mirt(data.mds, 1, itemtype = "Rasch", verbose = FALSE)
+
+```
+
+
+
+**2)** Determine the dimensions, i.e. those which loaded negatively or positively on the first component of the PCA.
+
+As shown previously, the Q3, standardized residual correlations enter the PCA.
+
+```{r PCA}
+cor.mds = residuals(mds.1dim, type = "Q3", verbose = FALSE) #gives the correlation of the standardized residuals
+
+PCA.mds = prcomp(cor.mds, center=TRUE, retx=TRUE)  #PCA
+PC1.neg = which(PCA.mds$rotation[,"PC1"]<0) # negative sign on PC1
+PC1.pos = which(PCA.mds$rotation[,"PC1"]>0) # positive sign on PC1
+```
+
+
+**3)** Set aside the common item parameter estimates.
+
+The function ´coef()´ gives the item parameter estimates, option ´simplify = TRUE´ puts it in a nice
+matrix format.
+
+```{r coefficient}
+
+ coef.mds.1dim = coef(mds.1dim, simplify = TRUE)
+ coef.mds.1dim
+
+
+```
+
+
+
+**4)** Anchor the items from each dimension on the parameter estimates for these items found in 3).
+
+The anchoring is not intuitive, requires careful consideration of different options that the ´mirt()´ function contains. Each threshold has to be fixed to the estimated thresholds parameter from the common calibration.
+
+First, the items that loaded negatively on the first component: 
+
+```{r anchoring_negatvie}
+
+ #First run a Rasch analysis, as usual, but with option pars = "values"
+
+  mod.mds.dim1 = mirt(data.mds[, PC1.neg], 1, itemtype="Rasch", pars = "values") 
+
+  #get the coefficient matrix and replace the values with those from the common calibration
+  #to fix the first ,second, third, and fourth threshold.
+
+  mod.mds.dim1[which(mod.mds.dim1[ ,"name"]=="d1"), "value"] = coef.mds.1dim$items[PC1.neg,"d1"]
+  mod.mds.dim1[which(mod.mds.dim1[ ,"name"]=="d2"), "value"] = coef.mds.1dim$items[PC1.neg,"d2"]
+  mod.mds.dim1[which(mod.mds.dim1[ ,"name"]=="d3"), "value"] = coef.mds.1dim$items[PC1.neg,"d3"]
+  mod.mds.dim1[which(mod.mds.dim1[ ,"name"]=="d4"), "value"] = coef.mds.1dim$items[PC1.neg,"d4"]
+  
+  #finally set this, otherwise the anchored analysis will kept fixed.
+  mod.mds.dim1$est = FALSE
+     
+     
+
+    
+```
+
+Next, same procedure, with the items that loaded positively on the first component: 
+
+
+```{r anchor_positive}
+
+
+  #First run a Rasch analysis with option pars = "values"
+  
+  mod.mds.dim2 = mirt(data.mds[, PC1.pos], 1, itemtype="Rasch", pars = "values") 
+  
+  #get the coefficient matrix and replace the values with those from the common calibration
+  #to fix the first ,second, third, and fourth threshold.
+  mod.mds.dim2[which(mod.mds.dim2[ ,"name"]=="d1"), "value"] = coef.mds.1dim$items[PC1.pos,"d1"]
+  mod.mds.dim2[which(mod.mds.dim2[ ,"name"]=="d2"), "value"] = coef.mds.1dim$items[PC1.pos,"d2"]
+  mod.mds.dim2[which(mod.mds.dim2[ ,"name"]=="d3"), "value"] = coef.mds.1dim$items[PC1.pos,"d3"]
+  mod.mds.dim2[which(mod.mds.dim2[ ,"name"]=="d4"), "value"] = coef.mds.1dim$items[PC1.pos,"d4"]
+  
+  #next set this, otherwise the anchored analysis will not keep the estimates fixed. 
+  mod.mds.dim2$est = FALSE
+
+```
+
+
+**5)** Run separate anchored analyses.
+
+The option ´pars = ´ shows that the item parameter are fixed to the values of the common calibration now.
+```{r anchored_analysis}
+   
+   mod.PCM.dim1 = mirt(data.mds[, PC1.neg], 1, itemtype = "Rasch", pars = mod.mds.dim1) #anchored analysis
+   
+   mod.PCM.dim2 = mirt(data.mds[ ,PC1.pos], 1, itemtype = "Rasch", pars = mod.mds.dim2) #anchored analysis
+
+```
+
+**6)** Make a t-test (based on formula) for each pair of ability estimates. 
+
+The function ´fscores()´ allows to extract the theta estimates, setting ´full.scores.SE = TRUE´ further provides the precision of the estimates, which is also required for the t-test.
+
+```{r theta}
+
+Theta.dim1 = fscores(mod.PCM.dim1, full.scores.SE = TRUE)
+Theta.dim2 = fscores(mod.PCM.dim2, full.scores.SE = TRUE)
+
+```
+
+The t-test has to be computed manually, for each pair of ability estimate, i.e. per person.
+
+$$t_{(1,\infty)} =\frac{ \hat{\theta}_{PC^+} - \hat{\theta}_{PC^-} }
+                              {\sqrt{\hat{\sigma}^2_{PC^+} + \hat{\sigma}^2_{PC^-} }    } $$\
+
+```{r t.tests}
+
+   T_test_abs = abs(Theta.dim1[,"F1"] - Theta.dim2[,"F1"])/sqrt(Theta.dim1[, "SE_F1"]^2 + Theta.dim2[,"SE_F1"]^2)
+
+```
+
+
+**7)** Find the proportion of pairs of ability estimates with significant t-test.
+
+```{r prop.significant}
+
+sum(T_test_abs > 2.5)/length(T_test_abs)*100
+
+```
+
+
+**8)** If the proportion is > 5%, unidimensionality must be rejected. Here, there are 10.5% of significant t-tests, that is too much to support the unidimensionality of the MDS-items. 
+
+
+<div class="alert alert-danger"> 
+
+# Exercise
+
+Reproduce and reflect about the steps for the t-test for multidimensionality with the SRG-Data. 
+Show that the coefficients from the common calibration are identical with those from the anchored analysis.
+
+
+</div>

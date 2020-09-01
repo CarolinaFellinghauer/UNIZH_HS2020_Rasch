@@ -1,0 +1,677 @@
+---
+title: "8 Dimensionality"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- ~
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "7 7 2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+```{r setup, include=FALSE, comment=NA}
+
+
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep=TRUE,
+                      comment=NA)
+
+library(citr)
+library(bookdown)
+
+
+```
+
+
+
+Install plotrix and load following libraries
+
+```{r, warning=FALSE, echo=TRUE, comment=NA, message=FALSE}
+#library(iarm)
+#library(corrplot)
+library(eRm)
+library(plotrix)
+
+library(rgl) #library for 3-dimensional plotting functions
+
+
+```
+
+```{r, echo = FALSE}
+options(rgl.useNULL = TRUE)
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+
+# Unidimensionality
+
+Unidimensionality is a fundamental assumption in the Rasch model. Unidimensionality expects that item parameter are on the same common measurement continuum. This would mean, that for example, the MDS would measure only one single latent construct, namely "physical capacity" and the SRG measures only "stress related growth". If this holds, a scale is considered unidimensional.
+
+In presence of multidimensionality, the scale measures strongly different aspects of the latent characteristics and a single interval-scaled sum score is not meaningful anymore. While local item dependency and undimensionality may be related, local item dependency is not a condition for multidimensionality [Book: Rasch models in Health]. For example, in the analysis of the local item dependencies, the results pointed on two possible subscales for the physical capacity items: emotional aspects and functioning/self-care aspects. 
+
+As for the LID analysis, the dimensionality analysis is interested in detecting patterns in the standardized Rasch-residual matrix.
+
+# Diagnostics
+
+
+Several approaches are used to test the multidimensionality of an assessment scale. The lesson will cover two of these approaches the principal component analysis (PCA) which, again searches the Rasch-residuals for patterns and another approach which uses the raw data, bi-factor analysis. 
+
+
+
+## Principal Component Analysis (PCA)
+
+Principal component analysis (PCA) is a technique for reducing the dimensionality of datasets and to identify clusters of similar variables.
+
+PCA needs no distributional assumptions and, as such, is very much an adaptive exploratory method which can be used on numerical data of various types. 
+
+
+The PCA algorithm is very technical and requires a solid knowledge of matrix operations and linear algebra to be understood deeply. PCA bases on singular value decomposition (SVC). 
+
+But the idea is simple: reduce the dimensionality of a dataset, while preserving as much ‘variability’ (i.e. statistical information) as possible, i.e. through maximizing the variance in each dimension.
+
+In Rasch analysis, in order to determine the dimensionality of a set of variables of a scale, the standardized residuals are submitted to a PCA.
+
+
+### Numeric Output Analysis
+
+
+Call the SRG-Data
+```{r, results="hide", message =FALSE, eval=TRUE}
+
+#get the SRG datasets
+
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/SRG_Data_Course_UNIZH.csv?token=AB5GB47UIUWV7F5NMGA33T27K5IQ2"
+
+srg.data=read.csv(url(urlfile))
+
+dim(srg.data)
+colnames(srg.data)
+
+srg.items=c("SRG1", "SRG2",  "SRG3",  "SRG4",  "SRG5",  "SRG6",  "SRG7",  "SRG8",  "SRG9", "SRG10", "SRG11", "SRG12", "SRG13", "SRG14", "SRG15")
+
+
+# dataset with only the SRG items
+data.srg=srg.data[,srg.items]
+
+#check response coding (frequencies including missing values) for each SRG-item
+apply(data.srg, 2, table, useNA="always")
+
+```
+
+Next, we perform a Partial Credit Model (PCM) analysis to and calculate the residuals
+
+```{r PCM, warning = FALSE}
+PCM.srg=PCM(data.srg)
+PP.srg=person.parameter(PCM.srg)
+resid.srg=residuals(PP.srg)
+
+```
+
+The method we use for detecting the structure is a principal component analysis (PCA). The empirical correlation matrix of the residuals on which to perform the PCA is computed first with the function `prcomp()`. 
+
+But first, let's roughly understand the PCA and have a look only at the residuals of the two first items, ´SRG1´and ´SRG2´. One observation for example, circled in red, shows a very negative residual on the first item and rather positive residual on the second item.
+
+
+In Rasch analysis, the standardized residual ($z_{ni}$) is given by
+
+$$z_{ni} = \frac{x_{ni} - E[x_{ni}]}{\sqrt(V[x_{ni}])}$$
+where $E[x_{ni}]$ is the expected value given person $n$'s and item $i$ parameter estimates (the $\theta_n$ and $\delta_i$) and $V[x_{ni}]$ its variance. Values close to zero indicate that a person's item rating fits the model well. Greater values indicate that the model cannot accommodate a person's response well. Negative residual values indicate that the model would expect a larger rating from a persons on an item. Positive residual values indicate that the model would expect a smaller rating from a person.
+
+
+```{r resid_1_2, fig.cap = "Figure 1", fig.align = 'center', fig.width = 5, fig.height = 5}
+
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+     main = round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3))
+draw.circle(-2.85, 0.8, radius = 0.1, border = "red")
+```
+
+
+
+We could plot also the residuals for three items in a plot and try to find persons with similar patterns.
+
+
+
+```{r 3_dimensional_residuals, webgl = TRUE, fig.cap = "Figure 2", fig.align = 'center'}
+
+RR=as.data.frame(resid.srg) #Rasch residuals as data.frame instead of matrix
+  
+plot3d(RR$SRG1, RR$SRG13, RR$SRG15, xlab = "SRG1", ylab = "SRG13", zlab = "SRG15")
+  
+```
+
+
+Detecting patterns in a three dimensional space is already not that easy. With 4 or more dimensions, plotting and making sense of all item residuals is impossible. Dimension reduction with a PCA is the solution. A PCA allows to convert the correlations among all of the item residuals into a 2 or 3 dimensional plot. Items residuals that are highly correlated cluster together.
+
+
+````{r}
+cor.srg = cor(resid.srg, use="pairwise.complete.obs", method="pearson")
+PCA.srg = prcomp(cor.srg,center=TRUE, retx=TRUE)
+round(PCA.srg$rotation,3)
+
+```
+
+
+The next figures shows the first and second PCA loading drawn in a coordinate system, to investigate how the items are grouping in a 2-dimensional space. Note that oppositions on the x-axis are more important than those one the y-axis.
+
+
+```{r 2_dimensional_start, fig.height = 5, fig.cap = "Figure 3", fig.align = 'center', echo = FALSE}
+
+
+plot(PCA.srg$rotation[,1], PCA.srg$rotation[,2], xlab="1st component", ylab="2nd component", main="SRG Item PCA-Loading", col="white")
+
+text(PCA.srg$rotation[,1], PCA.srg$rotation[,2], rownames(PCA.srg$rotation), cex=0.7)
+
+```
+
+
+
+What happened? The next figures shall help to understand PCA with singular value decomposition (SVD).
+
+Let's get back to the first plot with only two items and calculate the average residual for SRG1 and SRG2, respectively and add them to the plot. The point where the ´segments´cross is the center of the residual cloud. 
+
+
+```{r resid_1_2_center, fig.cap = "Figure 4", echo = FALSE, fig.align = 'center', fig.width = 5, fig.height =5}
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+     main = round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3))
+
+segments(x0 = mean(resid.srg[,1], na.rm = TRUE), y0 = -2, 
+         x1 = mean(resid.srg[,1], na.rm = TRUE), y1 = 5,
+         col = "blue", lty = "dashed")
+segments(x0 = -3, y0 = mean(resid.srg[,2], na.rm = TRUE), 
+         x1 = 3, y1 = mean(resid.srg[,2], na.rm = TRUE),
+         col = "red", lty = "dashed")
+```
+
+With the standardized residuals, the center of the residual cloud is the origin of the coordinate system. With the data centered on the origin, we can try to fit a line to it. 
+To do this, the PCA starts by drawing a random line through the origin and than rotates the line as well as it can until the best fitting line is found.
+
+
+```{r resid_1_2_center_random_line,  fig.show = 'animate', animation.hook = 'gifski', warning = FALSE, echo = FALSE, fig.width = 5, fig.height = 5, fig.cap = "Figure 5", fig.align = 'center'}
+
+library(gifski)
+library(LearnGeom)
+
+Angles = seq(0.001,179.999,5.001)
+
+for(i in 1:length(Angles)){
+#i=5
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+     main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+     col = "lightgrey", xlim = c(-4,4), ylim = c(-4,4))
+
+segments(x0 = mean(resid.srg[,1], na.rm = TRUE), y0 = -4, 
+         x1 = mean(resid.srg[,1], na.rm = TRUE), y1 = 4,
+         col = "black")
+segments(x0 = -4, y0 = mean(resid.srg[,2], na.rm = TRUE), 
+         x1 = 4, y1 = mean(resid.srg[,2], na.rm = TRUE),
+         col = "black")
+
+Line = CreateLineAngle(P = c(0,0), angle = Angles[i]) # a random line through origin
+abline(Line[2], Line[1], col = "blue")
+
+#random case coordinates for illustration (P104, P320, P27, P82)
+PP1 = ProjectPoint(c(resid.srg[104,1], resid.srg[104,2]), Line = Line)
+PP2 = ProjectPoint(c(resid.srg[409,1], resid.srg[409,2]), Line = Line)
+PP3 = ProjectPoint(c(resid.srg[27,1], resid.srg[27,2]), Line = Line)
+PP4 = ProjectPoint(c(resid.srg[79,1], resid.srg[79,2]), Line = Line)
+
+points(resid.srg[104,1], resid.srg[104,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[409,1], resid.srg[409,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[27,1], resid.srg[27,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[79,1], resid.srg[79,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+
+points(PP1[1], PP1[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP2[1], PP2[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP3[1], PP3[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP4[1], PP4[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+
+segments(x0 = PP1[1], y0 = PP1[2], x1 = resid.srg[104,1], y1 = resid.srg[104,2], lty = "dotted")
+segments(x0 = PP2[1], y0 = PP2[2], x1 = resid.srg[409,1], y1 = resid.srg[409,2], lty = "dotted")
+segments(x0 = PP3[1], y0 = PP3[2], x1 = resid.srg[27,1], y1 = resid.srg[27,2], lty = "dotted")
+segments(x0 = PP4[1], y0 = PP4[2], x1 = resid.srg[79,1], y1 = resid.srg[79,2], lty = "dotted")
+
+#print(i)
+
+Distance_Origin = 
+  DistancePoints(c(0,0), PP1)^2 + DistancePoints(c(0,0), PP2)^2 +  
+  DistancePoints(c(0,0), PP3)^2 + DistancePoints(c(0,0), PP4)^2 
+
+text(2,-2.5, paste("Angle = ", round(Angles[i]), sep = ""), adj = 0, cex = 0.5)
+text(2,-2.75, "SSD", adj = 0, cex = 0.5)
+text(2,-3, round(Distance_Origin,2), adj = 0, cex = 0.5)
+
+}
+
+
+```
+\newline
+
+The best fitting lines is not chosen by minimizing the sum of the orthogonal projection (the black dashed lines) to the random line, but by maximizing the sum of the squared distances of the projected points to the origin (SSD). In principle, the two approaches are equivalent, however SSD is computationally more efficient. 
+
+The previous figure, illustrated the procedure on a sample of 4 points. In reality, all the points would be included to find the sum of squared distances (SSD).
+
+
+For these 4 selected points the SSD value is printed in the lower right corner of the figures. The SSD is maximum for an angle of about 170 degrees.  
+
+
+```{r, best_fit_for_example, warning = FALSE, comment = FALSE, fig.width = 5, fig.height = 5, fig.cap = "Figure 6", fig.align = 'center', echo = FALSE}
+
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+    main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+    col = "lightgrey", xlim = c(-4,4), ylim = c(-4,4))
+
+segments(x0 = mean(resid.srg[,1], na.rm = TRUE), y0 = -4, 
+         x1 = mean(resid.srg[,1], na.rm = TRUE), y1 = 4,
+         col = "black")
+segments(x0 = -4, y0 = mean(resid.srg[,2], na.rm = TRUE), 
+         x1 = 4, y1 = mean(resid.srg[,2], na.rm = TRUE),
+         col = "black")
+
+Line = CreateLineAngle(P = c(0,0), angle = 170) # a random line through origin
+abline(Line[2], Line[1], col = "blue")
+
+text(-3.75, 1.5, "PC1", col = "blue")
+
+
+PP1 = ProjectPoint(c(resid.srg[104,1], resid.srg[104,2]), Line = Line)
+PP2 = ProjectPoint(c(resid.srg[409,1], resid.srg[409,2]), Line = Line)
+PP3 = ProjectPoint(c(resid.srg[27,1], resid.srg[27,2]), Line = Line)
+PP4 = ProjectPoint(c(resid.srg[79,1], resid.srg[79,2]), Line = Line)
+
+points(resid.srg[104,1], resid.srg[104,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[409,1], resid.srg[409,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[27,1], resid.srg[27,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+points(resid.srg[79,1], resid.srg[79,2], pch = 4, col = "darkgreen", lwd = 2, cex = 1.25)
+
+points(PP1[1], PP1[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP2[1], PP2[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP3[1], PP3[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+points(PP4[1], PP4[2], pch = 4, col = "red", lwd =2,  cex = 1.25)
+
+segments(x0 = PP1[1], y0 = PP1[2], x1 = resid.srg[104,1], y1 = resid.srg[104,2], lty = "dotted")
+segments(x0 = PP2[1], y0 = PP2[2], x1 = resid.srg[409,1], y1 = resid.srg[409,2], lty = "dotted")
+segments(x0 = PP3[1], y0 = PP3[2], x1 = resid.srg[27,1], y1 = resid.srg[27,2], lty = "dotted")
+segments(x0 = PP4[1], y0 = PP4[2], x1 = resid.srg[79,1], y1 = resid.srg[79,2], lty = "dotted")
+
+#print(i)
+
+Distance_Origin = 
+  DistancePoints(c(0,0), PP1)^2 + DistancePoints(c(0,0), PP2)^2 +  
+  DistancePoints(c(0,0), PP3)^2 + DistancePoints(c(0,0), PP4)^2 
+
+text(2,-2.5, paste("Angle = ", 170, sep = ""), adj = 0, cex = 0.5)
+text(2,-2.75, "SSD", adj = 0, cex = 0.5)
+text(2,-3, round(Distance_Origin,2), adj = 0, cex = 0.5)
+
+
+```
+
+
+The line that maximizes the SSD is called the first principal component (PC1). The PC1 here, for the example on 4 data points has a slope of :
+
+```{r, eval = FALSE, warning = FALSE, comment = FALSE, error = FALSE}
+# Reminder/Info: Slope is tangent of the angle.
+library(sp)
+library(shadow)
+
+Angle.Rad = deg2rad(170)  # angle in radians
+Slope = tan(Angle.Rad)
+Slope
+
+```
+
+
+```{r, echo = FALSE}
+library(sp)
+library(shadow)
+
+Angle.Rad = deg2rad(170)  # angle in radians
+Slope = tan(Angle.Rad)
+```
+
+```{r, echo = FALSE, include = TRUE}
+as.numeric(Slope)
+```
+
+
+The slope is obtained by calculating the tangent of the angle ($\alpha$). 
+
+$$tan (\alpha) = \frac{opposite}{adjacent} = slope$$
+
+The slope of the ideal fitting line is about - 0.176. 
+This would indicate that for an increase of 1/(-0.176) =  5.68 units of SRG1 residuals, the residuals for SRG2 change of negative 1. This is called mathematically, the "linear combination" of SRG1 and SRG2. The PC1 consists of 5.68 parts of SRG1 and 1 negative part of SRG2. Data mostly spreads out on the SRG1 axis and less on the SRG2 axis. This means also that SRG1 is more important in explaining how the residuals are spread out. 
+
+
+```{r linear_combi, warning = FALSE, comment = FALSE, error = FALSE, fig.width = 5, fig.height = 5, fig.cap = "Figure 7", fig.align = 'center', echo = FALSE}
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+    main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+    col = "lightgrey", xlim = c(-6,6), ylim = c(-6,6))
+
+
+Line = CreateLineAngle(P = c(0,0), angle = 170) # ex. best fit line
+abline(Line[2], Line[1], col = "blue")
+
+segments(-6, 0, 6, 0)
+segments(0, -6, 0, 6)
+
+text(-3.75, 1.5, "PC1", col = "blue")
+
+
+arrows(x0 = 0, y0 = 0, 
+         x1 = 1/tan(deg2rad(10)), y1 = 0,
+         col = "black", lwd = 1,
+          length = 0.1)
+arrows(x0 = 1/tan(deg2rad(10)), y0 = 0, 
+         x1 = 1/tan(deg2rad(10)), y1 = -1, 
+         col = "green", lwd = 1,
+        length = 0.1)
+arrows(x0 = 0, y0 = 0, 
+         x1 = 1/tan(deg2rad(10)), y1 = -1, 
+         col = "red", lwd = 1,
+        length = 0.1)
+
+text(2,-2.5, paste("Angle = ", 170, sep = ""), adj = 0, cex = 0.5)
+text(2,-2.75, "SSD", adj = 0, cex = 0.5)
+text(2,-3, round(Distance_Origin,2), adj = 0, cex = 0.5)
+
+```
+
+
+Here for PC1 going over 5.69 (the adjacent) and 1 the opposite. These values allow to calculate the hypotenuse with :
+
+$$a^2 = b^2 + c^2 $$
+```{r hypotenuse}
+#a is the square root of a^2
+Hyp=sqrt(1/tan(deg2rad(10))^2 + 1^2)
+Hyp
+```
+
+The value for $a = 5.76$ is the length of the hypotenuse.
+When doing PCA with SVD, the length of the hypotenuse is re-scaled to equal 1.
+To rescale the triangle so that the red line is one unit long is to divide the length of each side by $a = 5.76$.
+
+
+
+```{r linear_combi_rescaled, warning = FALSE, comment = FALSE, error = FALSE,  fig.width = 5, fig.height = 5, fig.cap = "Figure 8", fig.align = 'center', echo = FALSE}
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+    main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+    col = "lightgrey", xlim = c(-1,1), ylim = c(-1,1))
+
+
+Line = CreateLineAngle(P = c(0,0), angle = 170) # ex. best fit line
+abline(Line[2], Line[1], col = "blue")
+
+segments(-4, 0, 4, 0)
+segments(0, -4, 0, 4)
+
+text(-3.75, 1.5, "PC1", col = "blue")
+
+
+arrows(x0 = 0, y0 = 0, 
+         x1 = (1/tan(deg2rad(10)))/Hyp, y1 = 0,
+         col = "black", lwd = 1,
+          length = 0.1)
+arrows(x0 = (1/tan(deg2rad(10)))/Hyp, y0 = 0, 
+         x1 = (1/tan(deg2rad(10)))/Hyp, y1 = -1/Hyp, 
+         col = "green", lwd = 1,
+        length = 0.1)
+arrows(x0 = 0, y0 = 0, 
+         x1 = (1/tan(deg2rad(10)))/Hyp, y1 = -1/Hyp, 
+         col = "red", lwd = 1,
+        length = 0.1)
+
+text(2,-2.5, paste("Angle = ", 170, sep = ""), adj = 0, cex = 0.5)
+text(2,-2.75, "SSD", adj = 0, cex = 0.5)
+text(2,-3, round(Distance_Origin,2), adj = 0, cex = 0.5)
+
+```
+
+
+The scaled values are 1 for the hypotenuse (red arrow), 0.17 for the opposite (green arrow), and 0.98 for the adjacent (black arrow). The slope does not change, the linear combination remains the same.   
+Terminology: The 1 unit vector consisting of 0.98 SRG1 and 0.17 SRG2 is called the *Singular Vector* or *Eigenvector* for PC1. The proportions each SRG item are called *Loading scores*.
+
+Also, the PCA's SSD for the best fit line are better known as the *Eigenvalue for PC1*.
+
+Now, having PC1, searching for PC2 corresponds only to drawing a perpendicular line to PC1.
+
+
+```{r PC2_plot, echo = FALSE, warning = FALSE, comment = FALSE, error = FALSE, fig.width = 5, fig.height = 5, fig.cap = "Figure 9", fig.align = 'center', echo = FALSE}
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+    main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+    col = "lightgrey", xlim = c(-1,1), ylim = c(-1,1))
+
+
+Line2 = CreateLineAngle(P = c(0,0), angle = 80) # ex. best fit line
+abline(Line2[2], Line2[1], col = "pink")
+
+Line = CreateLineAngle(P = c(0,0), angle = 170) # ex. best fit line
+abline(Line[2], Line[1], col = "blue")
+ 
+segments(-4, 0, 4, 0)
+segments(0, -4, 0, 4)
+
+text(-0.8, 0.25, "PC1", col = "blue")
+text(0.5, 1, "PC2", col = "pink")
+
+
+arrows(x0 = 0, y0 = 0, 
+         x1 = 0, y1 =(1/tan(deg2rad(10)))/Hyp,
+         col = "black", lwd = 1,
+          length = 0.1)
+arrows(x0 = 0, y0 = (1/tan(deg2rad(10)))/Hyp, 
+         x1 =   1/Hyp, y1 = (1/tan(deg2rad(10)))/Hyp, 
+         col = "green", lwd = 1,
+        length = 0.1)
+arrows(x0 = 0, y0 = 0, 
+         x1 =  1/Hyp, y1 = (1/tan(deg2rad(10)))/Hyp, 
+         col = "red", lwd = 1,
+        length = 0.1)
+
+text(2,-2.5, paste("Angle = ", 170, sep = ""), adj = 0, cex = 0.5)
+text(2,-2.75, "SSD", adj = 0, cex = 0.5)
+text(2,-3, round(Distance_Origin,2), adj = 0, cex = 0.5)
+
+```
+
+The loading of SRG1 and SRG2 of PC2 are simply $0.17$ and $0.98$ respectively. The red arrow, the hypotenuse, is the *Singular Vector of PC2* or *Eigenvector of PC2*. 
+The eigenvalue of PC2 is the SSD between the projected points and the origin. 
+
+```{r projections_PC1_PC2, comment = FALSE, error = FALSE, warning = FALSE, fig.width = 5, fig.height = 5, fig.cap = "Figure 10", fig.align = 'center', echo = FALSE}
+
+plot(resid.srg[,1], resid.srg[,2], pch = 20, xlab = "SRG1", ylab = "SRG2", 
+    main = paste("Correlation ", round(cor(resid.srg[,1], resid.srg[,2], use = "pairwise.complete.obs"),3), sep=""), 
+    col = "lightgrey", xlim = c(-4,4), ylim = c(-4,4))
+
+
+Line2 = CreateLineAngle(P = c(0,0), angle = 80) # ex. best fit line
+abline(Line2[2], Line2[1], col = "pink")
+
+Line = CreateLineAngle(P = c(0,0), angle = 170) # ex. best fit line
+abline(Line[2], Line[1], col = "blue")
+ 
+segments(-4, 0, 4, 0)
+segments(0, -4, 0, 4)
+
+text(-3.8, 1, "PC1", col = "blue")
+text(1.75, 3.8, "PC2", col = "pink")
+
+
+PP1 = ProjectPoint(c(resid.srg[104,1], resid.srg[104,2]), Line = Line)
+PP2 = ProjectPoint(c(resid.srg[409,1], resid.srg[409,2]), Line = Line)
+PP3 = ProjectPoint(c(resid.srg[27,1], resid.srg[27,2]), Line = Line)
+PP4 = ProjectPoint(c(resid.srg[79,1], resid.srg[79,2]), Line = Line)
+
+points(resid.srg[104,1], resid.srg[104,2], pch = 4, col = "black", lwd = 2, cex = 1.25)
+points(resid.srg[409,1], resid.srg[409,2], pch = 4, col = "black", lwd = 2, cex = 1.25)
+points(resid.srg[27,1], resid.srg[27,2], pch = 4, col = "black", lwd = 2, cex = 1.25)
+points(resid.srg[79,1], resid.srg[79,2], pch = 4, col = "black", lwd = 2, cex = 1.25)
+
+points(PP1[1], PP1[2], pch = 4, col = "blue", lwd =2,  cex = 1.25)
+points(PP2[1], PP2[2], pch = 4, col = "blue", lwd =2,  cex = 1.25)
+points(PP3[1], PP3[2], pch = 4, col = "blue", lwd =2,  cex = 1.25)
+points(PP4[1], PP4[2], pch = 4, col = "blue", lwd =2,  cex = 1.25)
+
+segments(x0 = PP1[1], y0 = PP1[2], x1 = resid.srg[104,1], y1 = resid.srg[104,2], lty = "dotted")
+segments(x0 = PP2[1], y0 = PP2[2], x1 = resid.srg[409,1], y1 = resid.srg[409,2], lty = "dotted")
+segments(x0 = PP3[1], y0 = PP3[2], x1 = resid.srg[27,1], y1 = resid.srg[27,2], lty = "dotted")
+segments(x0 = PP4[1], y0 = PP4[2], x1 = resid.srg[79,1], y1 = resid.srg[79,2], lty = "dotted")
+
+###############################################################################
+
+PP1 = ProjectPoint(c(resid.srg[104,1], resid.srg[104,2]), Line = Line2)
+PP2 = ProjectPoint(c(resid.srg[409,1], resid.srg[409,2]), Line = Line2)
+PP3 = ProjectPoint(c(resid.srg[27,1], resid.srg[27,2]), Line = Line2)
+PP4 = ProjectPoint(c(resid.srg[79,1], resid.srg[79,2]), Line = Line2)
+
+
+points(PP1[1], PP1[2], pch = 4, col = "pink", lwd =2,  cex = 1.25)
+points(PP2[1], PP2[2], pch = 4, col = "pink", lwd =2,  cex = 1.25)
+points(PP3[1], PP3[2], pch = 4, col = "pink", lwd =2,  cex = 1.25)
+points(PP4[1], PP4[2], pch = 4, col = "pink", lwd =2,  cex = 1.25)
+
+segments(x0 = PP1[1], y0 = PP1[2], x1 = resid.srg[104,1], y1 = resid.srg[104,2], lty = "dotted")
+segments(x0 = PP2[1], y0 = PP2[2], x1 = resid.srg[409,1], y1 = resid.srg[409,2], lty = "dotted")
+segments(x0 = PP3[1], y0 = PP3[2], x1 = resid.srg[27,1], y1 = resid.srg[27,2], lty = "dotted")
+segments(x0 = PP4[1], y0 = PP4[2], x1 = resid.srg[79,1], y1 = resid.srg[79,2], lty = "dotted")
+
+```
+
+
+
+
+To draw the final PCA plot for PC1 and PC2 would only require rotating the figure, so that PC1 is horizontal and PC2 vertical and use the projects points as coordinates for the points.
+
+To find PC3 requires finding the best fitting perpendicular line to PC1 and PC2 that goes through the origin and maximizes SSD. The number of principal components that can be found, is the number of items of the scale, or number of columns of the residual matrix.
+
+In general, additional principal components have lesser importance, i.e. it can be expected that differences in item residuals are more important along the first principal component axis (PC1) than differences along the second principal component axis (PC2), etc...
+
+Higher positive and higher negative loading on the first principal component (PC1) indicate items that have the highest opposite loading and may indicate strong secondary aspects of the latent trait being measured. 
+
+
+```{r 2_dimensional, fig.height = 5, fig.cap = "Figure 11", fig.align = 'center', echo = FALSE}
+
+##analysis of the PCA loading 
+
+plot(PCA.srg$rotation[,1], PCA.srg$rotation[,2], xlab="1st component", ylab="2nd component", main="SRG Item PCA-Loading")
+
+###add labels to identify the item loading locations
+
+plot(PCA.srg$rotation[,1], PCA.srg$rotation[,2], xlab="1st component", ylab="2nd component", main="SRG Item PCA-Loading", col="white")
+
+text(PCA.srg$rotation[,1], PCA.srg$rotation[,2], rownames(PCA.srg$rotation), cex=0.7)
+
+
+```
+
+
+
+Based on the first component, it looks like two opposite poles emerge with on one side
+
+
+- SRG1 *I learned to be nicer to others*, SRG9 *I learned to listen more carefully when others talk to me*, SRG10 *I learned to be open to new information and ideas*, SRG11 *I learned to communicate more honestly with others*, SRG13  *I learned that it’s okay to ask others for help*, SRG15 *I learned that there are more people who care about me than I thought* 
+
+and on the other side
+
+
+- SRG2 *I feel freer to make my own decisions*, SRG8 *I learned to be a more confident person*, SRG14 *I learned to stand up for my personal rights*, SRG4  *I learned to be myself and not try to be what others want me to be* and SRG5 *I learned to work through models and not just give up*.
+
+
+**Openness to others and novelty** versus **Self-Confidence and persistence**?
+
+
+
+Analysis of the PCA loading for the 3 first components, using the loading as x-axis, y-axis, and z-axis coordinates allows to show the item grouping in a 3-dimensional space.
+
+
+```{r 3_dimensional, webgl = TRUE}
+
+  Dataset=as.data.frame(PCA.srg$rotation)
+  Dataset=cbind(id=rownames(Dataset), Dataset)
+  
+ plot3d(Dataset$PC1, Dataset$PC2, Dataset$PC3, 
+          xlab = "PC1", ylab = "PC2", zlab = "PC3",
+          type = "s", radius = 0.00, col="white")
+ text3d(Dataset$PC1, Dataset$PC2, Dataset$PC3, texts = rownames(Dataset))
+
+```
+
+
+On PC2, a group of items seem to detach from the rest SRG12 *I learned that I want to have some impact on the world*, SRG7 *I learned to how to reach out and help others* and SRG6 *I learned to find more meaning in life*, **Meaning of life**?
+
+SRG3 *I learned that I have something of value to teach others about life* which appeared close to this group in the 2 dimensional representation, is now even more detached when adding the third dimension.
+
+The analysis of the PC loading, shows us relatively meaningful residual cluster in terms of the content they measure. However, this is not sufficient to conclude that the scale is not unidimensional.
+
+To determine, if the opposite loading are within an acceptable range an analysis of eigenvalues is necessary. 
+
+We know that the eigenvalues are the SSD of the projected data points on the principal components. These values can be converted into variation around the origin (0,0) by dividing them by the sample size minus 1 or $n - 1$.
+
+
+```{r}
+Eigen.srg = eigen(cor.srg)$values
+
+Perc.Eigen.srg = Eigen.srg/sum(Eigen.srg)*100 
+Cum.Perc.Eigen.srg = cumsum(Perc.Eigen.srg)
+
+PCA.Table.srg = cbind(Eigen.srg, Perc.Eigen.srg, Cum.Perc.Eigen.srg)
+
+PCA.Table.srg
+```
+
+
+### Visual Analysis
+
+Screeplot or barplot of the eigenvalues show the change in eigenvalues. It could be shown in terms of variation to the origin, i.e. the percentag of variation they account for. The elbow, were the line "flexes" in is usually indicative of the number of dimensions. Here the line does not seem to peek downwards, starting from an acceptable level, first eigenvalue being 1.8.
+
+```{r PCA Barplot Screeplot}
+
+barplot(Eigen.srg, main="Screeplot")
+screeplot(PCA.srg, type="lines", main="Screeplot")
+```
+
+The figures and the eigenvalue table, especially the column for the cumulative proportion of variation that each additional PC brings, shows that this instrument is not loading strongly on the first components. It may indicate the absence of a dominant PC but also the absence of multiple dimensions. The first eigenvalue is often used a as a criterion to determine if data is uni- or multidimensional. Different cut-offs are found in the litterature. In Rasch analysis, unidimensionality is often assumed if the first eigenvalue is below 2. 
+
+
+# Exercise
+
+<div class="alert alert-danger"> 
+
+
+Using the MDS Data :
+
+a) compute eigenvalues and 
+b) draw a scree plot which shows the proportion of variation that each PC accounts for.
+
+c) Is it unidimensional?
+
+Based on the proportion of variance that the 3 first PC explain:
+
+d) would you rather draw a 2-dimensional or a 3-dimensional PC loading plot.
+
+
+</div>
+
+
+
+
+# References
+
+
+
