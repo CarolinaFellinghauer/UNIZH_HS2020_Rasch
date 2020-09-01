@@ -1,0 +1,241 @@
+---
+title: "Local Item Dependency: *Continued*"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- ~
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "7 7 2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+```{r setup, include=FALSE}
+
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep=TRUE,
+                      comment=NA)
+library(citr)
+library(bookdown)
+
+```
+
+
+
+```{r, warning=FALSE, echo=TRUE, comment=NA, message=FALSE}
+
+library(eRm)
+
+urlfunction = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/LIDGraph.R?token=AB5GB42GG6I6YI2MF3KDINC7K5JG6"
+
+source(urlfunction)
+        
+```
+
+
+# Local Item Dependency
+
+Items are said locally dependent when the correlation of the $Q_3$ statistic, i.e. the standardized Rasch residuals is above a cut-off. The selected cut-off size is matter of discussion but recent simulation studies of @karlbangchristensenCriticalValuesYen2017 showed that they should not exceed more than 0.2 above the average residual correlation $$Q^{\star}_3=Q_{3,max}-\bar{Q_3}>0.2$$
+This lesson builds on the results found in the preceding exercise using the MDS capacity data.  
+
+Let's start by loading the data: 
+
+```{r MDS Data}
+
+# get the MDS dataset from GitHub
+
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/WHO_MDS_course.csv?token=AB5GB46B55WMO5AU74G4CKK7K5JSG"
+
+MDS.data=read.csv(url(urlfile), sep = ";")
+
+# Select only the MDS items, these are all columns except the first four. 
+# It starts with vision.
+
+mds.items = colnames(MDS.data)[-(1:4)]
+
+# data only with the items
+data.mds = MDS.data[, mds.items]
+
+# make them start at zero
+data.mds = data.mds - 1
+
+```
+
+
+
+# Adjustment
+
+
+In the last exercise, the capacity items of the MDS survey showed strong LID for many items. One approach to solve local item dependencies is to create 'testlets', also sometimes called 'super-items'.
+
+Testlets simply consist of a summation of the LID items. Typically, one would not solve all the LID at once but, stepwise starting with the highest correlation(s).
+
+The results of the previous exercises showed two pair of items with LID above 0.7, these were:
+
+ - *Depressivity* & *Anxiety* ($r = 0.7567$)
+ - *Going out* & *Shopping* ($r = 0.7011$)
+ 
+ 
+Creating a testlet means, that the separate items will not be kept, but the sum of the dependent items used instead.
+
+```{r testlet12}
+
+#what was the name of the variables...
+colnames(data.mds)
+
+#testlet for Depressivity & Anxiety
+data.mds[, "Testlet1"] = rowSums(data.mds[,c("Depressivity", "Anxiety")], na.rm = TRUE)
+
+# this is same as 
+
+# data.mds[, "Testlet1"] = data.mds[,"Depressivity"] + data.mds[, "Anxiety"] 
+
+# or
+
+# data.mds[, "Testlet1"] = apply(data.mds[,c("Depressivity", "Anxiety")], 1, sum, na.rm = TRUE)
+
+
+#second testlet GoingOut and Shopping
+data.mds[, "Testlet2"] = rowSums(data.mds[,c("GoingOut", "Shopping")], na.rm = TRUE)
+
+# having a look at the frequency distribution in the testlet
+
+table(data.mds[, "Testlet1"])
+table(data.mds[, "Testlet2"])
+
+# Removing the items from the dataset before running the PCM
+
+# Probably fancier ways to do it - thinking dplyr or else...
+
+data.mds=data.mds[,-which(colnames(data.mds) %in% c("Depressivity", "Anxiety", "GoingOut", "Shopping")==TRUE)]
+
+# check if testlet creation and removal of the LID items worked
+# table by column
+
+apply(data.mds, 2, table, useNA="always")
+
+dim(data.mds)
+```
+
+ 
+Now that the testlets are created, the PCM analysis and diagnostics are run as usual.
+
+
+```{r PCM_1st_testlets, warning = FALSE, error = FALSE}
+
+PCM.mds.testlet1 = PCM(data.mds) 
+
+```
+
+
+
+A visual analysis of the impact of the testlets on the LID can be done with LIDgraph(), first checking if LID of the size observed previously ($r > 0.7$) are still found. 
+
+
+```{r 0.7_LID, message = TRUE, error = FALSE, warning = FALSE}
+
+LIDgraph(PCM.mds.testlet1, cut = 0.7, vertex.color = "pink", vertex.size = 25,
+         vertex.label.dist = 0, cex = 0.45)
+
+```
+
+The output tells us that they are no more associations above the cut-off of $r = 0.7$.
+
+What about the cut-off recommended by @karlbangchristensenCriticalValuesYen2017.
+
+
+
+```{r Q3_star_LID, message =FALSE, error=FALSE}
+
+LIDgraph(PCM.mds.testlet1, cut = "Q3star", vertex.color = "pink", vertex.size = 25,
+         vertex.label.dist = 0, cex = 0.45, print.out = TRUE)
+
+```
+
+
+The output shows several high correlation with $r > 0.4$, *Toileting* and *Bed* ($r = 0.4503$) and *Feeding* & *Toileting* ($r = 0.4432$.) Note that the number of items that can be aggregated to a testlet is not limited to two. But, as *Feeding* and *Bed* are not showing any correlation above the $Q_3^*$ cut-off, the items are not assembled to one testlet. 
+
+```{r testlet34}
+
+#what was the name of the variables...
+colnames(data.mds)
+
+#testlet for Toileting & Bed
+data.mds[, "Testlet3"] = rowSums(data.mds[,c("Toileting", "Bed")], na.rm = TRUE)
+
+#second testlet Feeding & Toileting
+data.mds[, "Testlet4"] = rowSums(data.mds[,c("Feeding", "Toileting")], na.rm = TRUE)
+
+# having a look at the frequency distribution in the testlet
+
+table(data.mds[, "Testlet3"])
+table(data.mds[, "Testlet4"])
+
+# Removing the 3 items from the dataset before running the PCM
+
+data.mds = data.mds[,-which(colnames(data.mds) %in% c("Bed", "Feeding", "Toileting")==TRUE)]
+
+# check if testlet creation and removal of the LID items worked
+# table by column
+
+apply(data.mds, 2, table, useNA = "always")
+
+dim(data.mds)
+```
+
+
+Running again the PCM with 2 additional testlets representing the self-care items.
+
+
+```{r PCM2}
+
+PCM.mds.testlet2 = PCM(data.mds)
+
+```
+
+
+See if the association pattern is generally ameliorated.
+
+```{r Q3_star_LID2, message =FALSE, error=FALSE}
+
+LIDgraph(PCM.mds.testlet2, cut = "Q3star", vertex.color = "pink", vertex.size = 25,
+         vertex.label.dist = 0, cex = 0.45, print.out = TRUE)
+
+```
+
+
+We could continue adressing stepwise the LID of the MDS items. When the strongest correlating items are adjusted for, weaker associations may disappear. On the other hand, the MDS-items are interrelated in a way, that a testlet approach to solve all the dependencies is tedious.
+
+Ideally, while solving for the LID, the model fit (PSI), item fit could also be tested for, we leave that for the exercise, with a simpler dataset.
+
+LID is close to another assumption that the Rasch model needs to test, i.e. multidimensionality. It can be expected, that some association clusters are so strong, that the pairwise dependencies it consists of may represent a distinct assessment dimension of a latent construct. 
+
+# Exercise
+
+<div class="alert alert-danger"> 
+
+Use the SRG data and create testlets with the LID items found previously. 
+Run a PCM analysis and provide:
+
+ - the model's reliability before and after testlet creation
+ - the model's item fit statistic
+ - the size of LID after creation of testlet(s).
+
+
+</div>
+
+
+# References
+
+
+

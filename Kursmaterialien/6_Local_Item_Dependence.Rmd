@@ -1,0 +1,316 @@
+---
+title: "Local Item Dependency"
+author:
+- Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik
+- ~
+- Carolina Fellinghauer
+- carolina.fellinghauer@uzh.ch
+date: "21 4 2020"
+output:
+  html_document:
+    highlight: null
+    number_sections: no
+    theme: simplex
+    toc: yes
+    toc_float: yes
+bibliography: Psychometric_test_V3.bib
+---
+
+```{r setup, include=FALSE}
+
+library(knitr)
+knitr::opts_chunk$set(tidy = TRUE, 
+                      tidy.opts = list(blank = TRUE, arrow = TRUE), 
+                      highlight = TRUE,
+                      collapse = FALSE,
+                      cache.extra = R.version, autodep=TRUE,
+                      comment=NA)
+library(citr)
+library(bookdown)
+
+```
+
+
+
+```{r, warning=FALSE, echo=TRUE, comment=NA, message=FALSE}
+
+library(eRm)
+library(PP)
+library(iarm)
+library(corrplot)
+library(igraph)
+library(R2R)
+
+```
+
+
+and load the Stress Related Growth (SRG) data: 
+
+
+```{r, dataload and analysis}
+# get the SRG data set from GitHub
+
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/SRG_Data_Course_UNIZH.csv?token=AB5GB47UIUWV7F5NMGA33T27K5IQ2"
+
+srg.data=read.csv(url(urlfile))
+
+dim(srg.data)
+colnames(srg.data)
+
+srg.items=c("SRG1", "SRG2",  "SRG3",  "SRG4",  "SRG5",  "SRG6",  "SRG7",  "SRG8",  "SRG9", "SRG10", "SRG11", "SRG12", "SRG13", "SRG14", "SRG15")
+
+
+# dataset with only the capacity items
+data.srg=srg.data[,srg.items]
+
+```
+
+
+
+
+
+# Local Item Dependency
+
+Testing local item dependencies (LID)  is important in Rasch analysis. Local independence means that items are not correlated beyond what can be explained by the common underlying latent variable. Items are expected to be conditionally independent given the latent variable. Violations can lead to inflated estimates of reliability and problems with construct validity [@baghaeiLocalDependencyRasch2008]. \
+
+
+The most widely reported fit statistic is the $Q_3$  which is just another name for the correlation between Rasch residuals [@doi:10.1177/014662168400800201].\
+
+Another fit statistic, that only applies to the Rasch  model, and is less frequently reported, is the partial gamma coefficient, which is conditioning with respect to a rest score from which only one item has been subtracted [@kreinerAnalysisLocalDependence2003].
+
+We illustrate both of these approaches.
+
+# Diagnostics
+
+## Numeric Output Analysis
+
+Prior to extracting Rasch residuals, a Partial Credit Model (`PCM`) and the person parameters (`person.parameter()`) of the PCM are computed. 
+
+```{r PCM_start, warning = FALSE}
+
+PCM.srg = PCM(data.srg) 
+PP.srg = person.parameter(PCM.srg)  
+
+```
+
+Having the person parameter, the Rasch residuals can be obtained.
+
+```{r Q3, warning = FALSE}
+
+resid.srg = residuals(PP.srg) # Calculates the Rasch residuals.
+dim(resid.srg) # number of rows (persons) and number of columns(items) for the residuals
+
+```
+
+There are residuals for 438 out of 450 cases. In fact, for extreme scores the ability estimate cannot be obtained with the implemented ML item dfficulty estimation method and ability estimates are needed to find the residuals. \
+Another reason to exclude persons from the analysis could also be a high number of missing values, but this is not the case in this data.
+
+If we want a list of the id numbers of the people without residuals, we can get that: 
+
+```{r extremes}
+Rows=rownames(resid.srg) # gives the original rownumber preceded with a P
+
+# extracting the rownumber of the excluded persons
+extrm=which(1:nrow(data.srg)%in%as.numeric(substr(Rows, 2,nchar(Rows)))==FALSE) 
+data.srg[extrm,] # we see these are only persons with 0 or 2 answers
+                  #minimum or maximum score
+```
+
+The persons with no residuals are extreme observations with absolute minimum or absolute maximum score. \
+
+The analysis of the local item dependency is only interested in the dependencies between items, the few excluded cases (2.6 %) in this sample would not make a significant difference. For that reason we can proceed.  \
+If there is local independence we expect the latent variable to explain all the correlations between the items. This means that the correlations between residuals should be very small. Correlations between residuals are called $Q_3$ values [@doi:10.1177/014662168400800201]. These $Q3$ values are used to evaluate whether items are locally dependent. When investigating LID only the positive correlations are relevant.
+
+
+Before we analyse the residual correlations we have a look at the regular item correlations:
+
+
+```{r correlations}
+
+cor.items.srg = cor(data.srg, use = "pairwise.complete.obs", method = "spearman") # item correlations
+
+round(cor.items.srg, digits=2) # rounding to 2 decimals
+
+```
+
+There are high positive correlations between the items. This can be expected if items measure a same construct.
+
+The Rasch residual allow to calculate the so called $Q3$ residual correlations, which are the remaining correlations when controlling for the latent trait measured, here stress related growth.
+
+```{r residual_correlation}
+
+cor.resid.srg = cor(resid.srg, use="pairwise.complete.obs") # residual correlations
+
+round(cor.resid.srg, digits=3) # rounding
+
+#corrplot(cor.resid.srg) #displays graphically the correlation matrix
+
+```
+
+The size of the correlations changed considerably. The correlation between the residuals are much smaller than the regular item correlations. Many are close to zero and many are negative. Negative correlations between residuals are common and especially seen for short scales. Large negative residual correlations can be an indication of multidimensionality of the scale. 
+
+
+Most studies us cut-off values from 0.2 to 0.3, as a rule of thumb, to decide if the dependency between items is significant. The numeric analysis of the residual correlation matrix implies only to detect the items with dependencies above the chosen cut-off. 
+
+The values in the upper and lower triangle of a correlation matrix are identical, symmetrically to the diagonal. The diagonal represents the item's auto-correlations of 1. 
+For that reason, to avoid duplicates, values of the upper part of the correlation matrix are observed with the function `which()`. See code in the examples for `?upper.tri`. 
+
+
+```{r code_LID}
+
+
+cor.resid.tri = cor.resid.srg  #to avoid overwritting the original matrix
+
+# setting values of the lower triangle and the diagonal to missing
+cor.resid.tri[lower.tri(cor.resid.tri, diag = TRUE)] = NA 
+
+which(cor.resid.tri > 0.2, arr.ind = TRUE)
+
+```
+
+There is only a correlation above 0.2 for the items *SRG13: I learned that it's okay to ask others for help* and *SRG15: I learned that there are more people who care about me than I thought*.  
+
+## Visual Analysis
+
+
+A visual analysis of the dependencies can be done by mean of an association graph, that highlights items associated above a cut-off. Such a useful function can be found in the package `R2R` and requires simply the entry of `RM`or `PCM` object and the cut-off. Further options for the layout of the figure are also available. 
+
+
+```{r residual_correlation_plot, message =FALSE, error=FALSE}
+
+urlfunction = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/LIDGraph.R?token=AB5GB42GG6I6YI2MF3KDINC7K5JG6"
+
+source(urlfunction)
+
+LIDgraph(PCM.srg, cut = 0.2, vertex.color = "pink", vertex.size = 40,
+         vertex.label.dist = 0)
+
+
+```
+
+
+
+
+The visual analysis only confirms what found previously. With a cut-off of $r = 0.2$, one pair of items shows LID, *SRG13* and *SRG15*. This pair of SRG items, has the largest $Q3$ value (0.246). But can we really be sure that this constitutes an anomaly in terms of local dependence? Another strategy to determine the cut-off has been suggested recently.  \
+
+@doi:10.1002/9781118574454.ch7 recommends that LID should be considered relative to the average of the residual correlations, because the magnitude of the residual correlations depends on the number of items. @karlbangchristensenCriticalValuesYen2017 formalized this, illustrating that if the largest $Q3$ value is more than 0.2 above the average $$Q^{\star}_3=Q_{3,max}-\bar{Q_3}>0.2$$  this indicates an  anomaly.
+
+We try this in the SRG data set, does it make a change to use the mean as cut-off
+
+```{r mean_correl}
+
+#selecting the largest Q3 value
+Q3.max.srg = max(cor.resid.srg[(cor.resid.srg < 1)])
+Q3.max.srg #shows the largest Q3 value
+
+
+Q3.average.srg = mean(cor.resid.srg[(cor.resid.srg<1)]) # calculates the average residual                                                           # correlation (without the diagonal)
+Q3.average.srg #shows the average residual correlation
+
+#calculates the difference between the largest Q3 value and the average residual correlation; if this value is bigger than .2 this would indicate LD
+
+Q3.star.srg = Q3.max.srg - Q3.average.srg
+Q3.star.srg  #shows Q3*
+
+```
+
+
+As the difference between the largest Q3 value and the average residual correlation is larger than .20, there is evidence of LID.
+
+Are other pair of items with residual correlations 0.2 above the average residual correlation? A visual display is more helpful to see where the dependencies are.
+
+
+```{r mean_as_cut_off}
+
+# using the mean as cut-off
+
+cut.off.Q3 = Q3.average.srg + 0.2
+
+cut.off.Q3
+
+```
+
+
+Drawing the association plot for dependencies above $cut$
+
+```{r mean_as_cut_off_figure, warning = FALSE, message = FALSE}
+
+LID_Q3cutoff=LIDgraph(PCM.srg, cut = cut.off.Q3, 
+                      vertex.color = "pink", vertex.size = 40,
+                        vertex.label.dist = 0, print.out = TRUE)
+
+LID_Q3cutoff$cut.off
+
+LID_Q3cutoff$LID
+
+```
+
+
+
+
+ Using this criterion, a relevant dependency is seen between the items *SRG5* and *SRG8* ($r = 0.156$) and *SRG13* and *SRG15* ($r = 0.246$). \
+
+The item *SRG5 I learned to work through models and not just give up* and  *SRG8 I learned to be a more confident person* both underline same action oriented coping mechanisms. \
+
+The items *SRG13 I learned that it's okay to ask others for help* and *SRG15 I learned that there are more people who care about me than I thought* underline the peer-support.
+
+```{r mean_as_cut_off_2, message =FALSE, error = FALSE}
+
+# In principle, it is not necessary to calculate that cut-off and simply put
+# cut = "Q3star"
+
+LIDgraph(PCM.srg, cut = "Q3star", vertex.color="pink", vertex.size=40,
+         vertex.label.dist = 0, print.out = TRUE)
+
+
+```
+
+ 
+<!-- ## Analysis by partial gamma -->
+
+<!-- We can test local dependence in a set of items ${x}_{1}$ to ${x}_{k}$ using the _partial gamma_. A general assumption is that, in presence of item independence the probability of each item score $x_{1}$ to $x_{k}$ given a latent trait $\theta$ equals the product of the single item scores given the latent trait   -->
+
+
+
+<!-- $$\mathrm{P}(x_{1}, \dots, x_{k} | \theta) = \prod_{i=1}^{k} \mathrm{P}(x_{i}|\theta)$$ -->
+<!-- A rest score $\mathrm{R}$, which is the raw sum score minus the contribution of item $x_{j}$ is defined as: -->
+
+<!-- $$\mathrm{R^{(j)}}=\sum_{i \neq j} x_{i}$$ -->
+
+<!-- The probability of local dependency between item $x_{j}$ and some other item $x_{k}$ given the  -->
+<!-- rest score is defined as the product of the single probabilities of $x_{j}$ and $x_{k}$ given the rest score $\mathrm{R}^{(j)}$. -->
+
+<!-- $$\mathrm{P}(x_{j}, x_{k} | \mathrm{R^{(j)})=\mathrm{P}(x_{j}| \mathrm{R^{(j)}}) \mathrm{P}(x_{k}| \mathrm{R^{(j)}})} $$ -->
+<!-- $$\mathrm{P}(.|\mathrm{R}^{(j)}) : corr(x_{j},x_{k})=0$$ -->
+<!-- $$\mathrm{P}(.| \mathrm{R}^{(k)}) : corr(x_{j},x_{k})=0$$ -->
+
+<!-- The partial gamma is implemented in the package `iarm`, details regarding the R-function can be shown by entering `?partgam_LD` in the console. -->
+
+<!-- ```{r partial_gamma} -->
+<!-- partgam_LD(data.srg, p.adj = "BH") #calculates the partial gamma coefficients -->
+<!-- ``` -->
+
+
+<!-- Two tables are shown in the partial gamma output, because it matters which of the items is -->
+<!-- subtracted from the total score to give the rest score. Only positive partial gammas are relevant. Further, only significant partial gammas that show up for both directions are relevant. Still, it seems that the partial gamma approach is even more sensitive and would indicate an additional pair locally dependent items *SRG10: I learned to be open to new information and ideas* and *SRG11: I learned to communicate more honestly with others* ($r = 0.111$). The residual correlation between these two items is just below the cut-off proposed by Christensen & al (here - 0.07 + 0.2 = 0.13). -->
+
+<!-- # Exercise -->
+
+<!-- <div class="alert alert-danger">  -->
+
+<!-- Use the MDS capacity data to investigate if LID items are found in the capacity metric: \ -->
+<!-- a) cut-off of 0.2 \ -->
+<!-- b) cut-off mean Q3 + 0.2 \ -->
+
+
+<!-- Which are the two pair of items with the strongest dependency? \ -->
+<!-- Which pair of items are only flagged when using 'Q3star'? \ -->
+<!-- Do you see themes in the correlation pattern? Potential nested latent constructs? -->
+
+<!-- </div> -->
+
+
+<!-- # References -->
+
+
+
