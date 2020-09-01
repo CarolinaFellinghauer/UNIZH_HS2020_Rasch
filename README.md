@@ -7,5 +7,7 @@ Course participants are invited to submit there homework via Github or OLAT, it 
 
 To open the .html course materials from GitHub, paste the course material URL into https://htmlpreview.github.io
 
-The master seminar takes place on Wednesdays 16:15 to 18:00.
+Otherwise, download the course code zip and open the .Rproj file in R Studio.
+
+                                        The master seminar takes place on Wednesdays 16:15 to 18:00.
 
