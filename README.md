@@ -5,3 +5,5 @@ Recommended litterature, Power point presentation shown and HTML Workbooks used 
 
 Course participants are invited to submit there homework via Github or OLAT, it is not mandatory.
 
+The master seminar takes place on Wednesdays 16:15 to 18:00.
+
