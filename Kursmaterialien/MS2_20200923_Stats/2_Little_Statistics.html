@@ -9,8 +9,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik" />
-<meta name="author" content />
+<meta name="author" content="Institut für psychologische Methodenlehre, Evaluation und Statistik" />
+<meta name="author" content="~" />
 <meta name="author" content="Carolina Fellinghauer" />
 <meta name="author" content="carolina.fellinghauer@uzh.ch" />
 
@@ -1491,8 +1491,8 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Some statistics</h1>
-<h4 class="author">Psychologische Institut für psychologische Methodenlehre, Evaluation und Statistik</h4>
-<h4 class="author"></h4>
+<h4 class="author">Institut für psychologische Methodenlehre, Evaluation und Statistik</h4>
+<h4 class="author">~</h4>
 <h4 class="author">Carolina Fellinghauer</h4>
 <h4 class="author"><a href="mailto:carolina.fellinghauer@uzh.ch" class="email">carolina.fellinghauer@uzh.ch</a></h4>
 <h4 class="date">19 2 2020</h4>
@@ -1536,12 +1536,12 @@ div.tocify {
       {1 + exp(\theta_j - \delta_i)} = 
         \frac{1}
             {1 + exp (\theta_j - \delta_i)}\]</span></p>
-<p>For example: the probability that a person with a proficiency of <span class="math inline">\(\theta = 5\)</span> responds correctly to an item with difficulty <span class="math inline">\(\theta = 6\)</span> is</p>
+<p>For example: the probability that a person with a proficiency of <span class="math inline">\(\theta = 5\)</span> responds correctly to an item with difficulty <span class="math inline">\(\delta = 6\)</span> is</p>
 <p><span class="math display">\[P(X_{ij}=1) = 
     \frac{e^{5 - 6}}
       {1 + e^{5 - 6}} = 
         \frac{e^{-1}}
-              {1 + e^{-1}} = 0.26\]</span></p>
+              {1 + e^{-1}} = 0.27\]</span></p>
 <div class="alert alert-danger">
 <ul>
 <li>What is the probability that the person responds <span class="math inline">\(X=0\)</span>?</li>
@@ -1854,7 +1854,7 @@ ThresholdMap(thresholds(RSM_Poly))</code></pre>
 ## Model 2  -1160.3   2320.6    8 5.3921  7  0.6122</code></pre>
 <div class="alert alert-danger">
 <h1 id="exercise">Exercise</h1>
-<p>Create a random sample of polytomous data with item discrimination constraint, for N = 500 persons and 15 items with 4 response categories, with difficulties ranging from -6 to 6 using <code>sim.poly.npl</code>.</p>
+<p>Create a random sample of polytomous data with item discrimination constraint, for N = 500 persons and 15 items with 4 response categories, with difficulties ranging from -6 to 6 and with the spread of the latent variable set to 2.5 using <code>sim.poly.npl</code>.</p>
 <p>Test which Rasch model fits the data better.</p>
 <p>Please use <code>set.seed(2020)</code>for the random sampling and make sure that the results are invariant.</p>
 </div>
