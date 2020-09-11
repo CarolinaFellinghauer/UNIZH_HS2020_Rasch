@@ -7,7 +7,7 @@
 
 #The most common Rasch model is the model for dichotomous items.
 
-# call the eRm library
+# call the  eRm package with library() or require()
 library(eRm)
 
 # simulate 10 dichotomous items for 500 persons with sim.rasch
