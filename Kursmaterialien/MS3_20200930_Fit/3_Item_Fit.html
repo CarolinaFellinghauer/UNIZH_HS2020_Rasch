@@ -1495,7 +1495,7 @@ div.tocify {
 <h4 class="author"></h4>
 <h4 class="author">Carolina Fellinghauer</h4>
 <h4 class="author"><a href="mailto:carolina.fellinghauer@uzh.ch" class="email">carolina.fellinghauer@uzh.ch</a></h4>
-<h4 class="date">25 3 2020</h4>
+<h4 class="date">30 9 2020</h4>
 
 </div>
 
@@ -1505,11 +1505,7 @@ div.tocify {
 <p>If the packages are not ready installed on your computer run the package installation file. Then we include the libraries:</p>
 <pre class="r"><code># install and load following R-packages
 library(eRm)
-library(iarm)
-library(PP)
-library(rms)
-library(R2R)
-library(splines)</code></pre>
+library(iarm)</code></pre>
 <p>and load the Stress Related Growth data (SRG) :</p>
 <pre class="r"><code># get the SRG dataset from GitHub
 
@@ -1551,20 +1547,16 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 </div>
 <div id="item-fit" class="section level1">
 <h1>Item Fit</h1>
-<p>Item fit statistics are commonly reported in validation studies with the Rasch model, as they indicate how well items describe the continuum of a latent trait. The item fit shows if the assumption of monotonicity can be supported, i.e. that the expected value of an item score increases when the values of the latent variable increases. Several approaches to test if an item fits the scale exist, the most commonly used are :</p>
-<ul>
-<li>infit and outfit mean squares</li>
-<li>visual analysis</li>
-</ul>
+<p>Item fit statistics are commonly reported in validation studies with the Rasch model, as they indicate how well items describe the continuum of a latent trait. The item fit shows how accurately or predictably data fit the Rasch model. Several approaches to test if an item fits the scale exist, the most commonly used being the infit and outfit mean squares.</p>
 <div id="infit-and-outfit" class="section level2">
 <h2>Infit and Outfit</h2>
-<p>Infit and outfit are mean-square residual summary statistics that range from zero to infinity.</p>
+<p>Infit and outfit are mean-square residual summary statistics that range from zero to infinity. Good fit of an item can be expected when these statistics are close or equal to 1.</p>
 <p>To find the item fit requires:</p>
 <ol style="list-style-type: decimal">
 <li>to calculate the <strong>expected response for each observation</strong> <span class="math inline">\(X_{ij}\)</span>, i.e. the response for item <span class="math inline">\(i\)</span> and person <span class="math inline">\(j\)</span> based on the estimated person and item parameter.</li>
 </ol>
 <p><span class="math display">\[E_{ij} = \Sigma^{mi}_{k=0} k (P_{ikj})\]</span></p>
-<p><span class="math inline">\(P_{ikj}\)</span> is the probability of a person <span class="math inline">\(j\)</span> responding <span class="math inline">\(k\)</span> on item <span class="math inline">\(i\)</span>, <span class="math inline">\(k\)</span> being the available response categories which are set to start from zero.</p>
+<p><span class="math inline">\(P_{ikj}\)</span> is the probability of a person <span class="math inline">\(j\)</span> responding <span class="math inline">\(k\)</span> on item <span class="math inline">\(i\)</span>. The letter <span class="math inline">\(k\)</span> stands for the response categories starting from 0, e.g. 0 and 1 for a dichotomous data collection.</p>
 <ol start="2" style="list-style-type: decimal">
 <li>to calculate a <strong>score residual</strong> <span class="math inline">\(Y_{ij}\)</span>:</li>
 </ol>
@@ -1578,7 +1570,7 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>The chi-square statistic divided by N corresponds to the <strong>Mean-Square Outfit statistic</strong></li>
 </ol>
-<p><span class="math display">\[Outfit_i = \frac{(\Sigma^N_{n=1}Z_{ij}^2)}{N}\]</span></p>
+<p><span class="math display">\[Outfit_i = \frac{\Sigma^N_{n=1}Z_{ij}^2}{N}\]</span></p>
 <p>The outfit statistic is sensitive to outlier, i.e. off-target information.</p>
 <ol start="5" style="list-style-type: decimal">
 <li>to diminish this effect of the Outfit statistic, the <strong>Mean-Square Infit</strong> adjusts the squared standardized residuals <span class="math inline">\(Z_{ij}^2\)</span>, by their individual variances, <span class="math inline">\(W_{ij}\)</span>:</li>
@@ -1591,7 +1583,7 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 <p><strong>Underdiscriminating</strong> items do not allow to differentiate person on a cut-off, the information is ‘blurred’. The sample cannot be stratified or measured with underdiscriminating items.</p>
 <p><strong>Overdiscriminating</strong> items are too ‘sharp’ and do not add any information about relative performances to the scale. Overdiscriminating items act like an on/off switch but not like a measuring device.</p>
 <p>In general underdiscriminating items are more a problem for a measurement scale than overdiscriminating items.</p>
-<p><em>T</em>-statistic and <em>P</em>-values can be derived for the infit and outfit statistics to determine how significantly an item’s fit statistic is departing from what would be expected. For more details see <span class="citation">(<span class="citeproc-not-found" data-reference-id="smithUsingItemMean1998"><strong>???</strong></span>)</span>.</p>
+<p><em>T</em>-statistic and <em>P</em>-values can be derived for the infit and outfit statistics to determine how significantly an item’s fit statistic is departing from what would be expected. For more details see <span class="citation">(Smith, Schumacker, and Bush 1998)</span>.</p>
 </div>
 </div>
 <div id="diagnostics" class="section level1">
@@ -1602,10 +1594,15 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 <pre class="r"><code># starting with the PCM analysis
 PCM.srg &lt;- PCM(data.srg)
 
+
 # first apply the person.parameter from the PCM run previously
 PP.srg &lt;- person.parameter(PCM.srg)
 
-# second apply itemfit()
+
+# having a look at the expected response probabilities and the residuals is
+# possible with: pmat(PP.srg) residuals(PP.srg)
+
+# however the package has all the functions to compute the itemfit()
 Fit &lt;- itemfit(PP.srg)
 Fit</code></pre>
 <pre><code>
@@ -1655,13 +1652,16 @@ SRG15 721.151 437   0.000      1.646     1.437    6.438   5.916   0.337</code></
 <p>The item 15 was the only item which was underfitting. It can be noticed, that the increase in the observed scores (the dots) is not consistently following the estimated ICC curve and that the observed change in observed score is flatter than predicted.</p>
 <div class="alert alert-danger">
 <h1 id="exercise">Exercise</h1>
-<p>Smith (1998, p.78) suggests cut-off based on sample sizes. Have a look at the article. Write down the two formulas and calculate the reasonable cut-offs for infit and outfit. Discuss item fit of the SRG-data under this light.</p>
+<p>Smith (1998, p.78) suggests cut-off based on sample sizes. Have a look at the article in the Literature folder. Find and write down into R-code the two formulas and calculate the reasonable cut-offs for infit and outfit. Discuss item fit of the SRG-data under this light.</p>
 </div>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
+<div id="ref-smithUsingItemMean1998">
+<p>Smith, R. M., R. E. Schumacker, and M. J. Bush. 1998. “Using Item Mean Squares to Evaluate Fit to the Rasch Model.” <em>J Outcome Meas</em> 2 (1): 66–78.</p>
+</div>
 <div id="ref-wrightReasonableMeansquareFit1994a">
 <p>Wright, B. D., J. M. Linacre, J. E. Gustafson, and P. Martin-Loef. 1994. “Reasonable Mean-Square Fit Values.” <em>Rasch Measurement Transactions</em> 8 (3): 370.</p>
 </div>
