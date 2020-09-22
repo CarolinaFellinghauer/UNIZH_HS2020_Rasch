@@ -7,8 +7,11 @@
 
 #The most common Rasch model is the model for dichotomous items.
 
-# call the  eRm package with library() or require()
-library(eRm)
+#install the package eRm and load it
+
+i$$$
+$$$$
+
 
 # simulate 10 dichotomous items for 500 persons with sim.rasch
 # set the seed to 1234
@@ -29,7 +32,7 @@ $$$
 ############################################################################3
 ####Polytomous Rasch Model
 
-#load the library psych
+#install and load the package psych
 
 $$$
   
@@ -64,6 +67,10 @@ summary(PCM_Poly)
 thres_map_fct <- "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/threshold_map_fct.r"
 
 source(url(thres_map_fct))
+
+#install package tibble
+
+$$$
 
 ##Run the ThresholdMap() function for the thresholds of RSM_Poly and PCM_Poly 
 #(check function thresholds()). 
