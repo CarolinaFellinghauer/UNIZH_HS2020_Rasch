@@ -70,8 +70,6 @@ ICCplot($$$, $$$)
 #now for item 15 with method = "score" and method "cut"
 
 
-#it is maybe difficult to see, but overfit and underfit could
-#be dectected with these curves.
 
   
   
