@@ -1575,6 +1575,50 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 <li>to diminish this effect of the Outfit statistic, the <strong>Mean-Square Infit</strong> adjusts the squared standardized residuals <span class="math inline">\(Z_{ij}^2\)</span>, by their individual variances, <span class="math inline">\(W_{ij}\)</span>:</li>
 </ol>
 <p><span class="math display">\[Infit_{i} = \frac{\Sigma^N_{n=1}W_{ij}Z_{ij}^2}{\Sigma^N_{n=1}W_{ij}}\]</span> The variance is found <span class="math inline">\(W_{ij}\)</span> above, the same for standardizing the residuals.</p>
+<pre class="r"><code># Example : outfit and infit equation in R for the dichotomous case
+library(eRm)
+
+# a simulated sample
+data.test &lt;- eRm::sim.rasch(500, 10, seed = 1234)
+
+# running the Rasch model
+RM.test &lt;- RM(data.test)
+
+# extracting the person.parameter these are required to extract residuals,
+# probabilities, and fit statistics
+PP &lt;- person.parameter(RM.test)
+
+# getting the residuals
+Zij &lt;- residuals(PP)
+
+# residuals squared for the equation
+Zij_square &lt;- Zij^2
+
+# Outfit
+Outfit &lt;- colSums(Zij_square)/nrow(Zij)  #diy outfit
+Outfit2 &lt;- itemfit(PP)$i.outfitMSQ  #outfit from package
+
+# compare
+cbind(Outfit, Outfit2)
+
+#################################################################### 
+
+# infit requires computing the variance Wij
+
+# the response probabilities
+Probs &lt;- pmat(PP)
+# Expected response
+Eij &lt;- Probs * 1 + (1 - Probs) * 0
+
+# Variance
+Wij &lt;- (1 - Eij)^2 * Probs + (0 - Eij)^2 * (1 - Probs)
+
+# Infit
+Infit &lt;- colSums(Wij * Zij_square)/colSums(Wij)  #diy infit
+Infit2 &lt;- itemfit(PP)$i.infitMSQ  #infit from package
+
+# compare
+cbind(Infit, Infit2)</code></pre>
 </div>
 <div id="underfit-and-overfit" class="section level2">
 <h2>Underfit and Overfit</h2>
