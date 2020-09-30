@@ -3,7 +3,6 @@ library(eRm)
 library(iarm)
 
 
-
 #Load the data from Github (select raw and copy the link) using read.csv(url())
 
 urlfile <- $$$
@@ -36,14 +35,14 @@ PCM.srg <- $$$
 PP.srg <- $$$
   
 #having a look at the expected response probabilities and the residuals is possible with:
-#pmat(PP.srg)
-#residuals(PP.srg)
+
+pmat($$$)
+residuals($$$)
   
   
 # second apply itemfit()  
   
 Fit <- $$$
-  
 Fit
 
 #Do all items fit? 
@@ -52,24 +51,27 @@ Fit
 #Let's look at ICCplots to learn more about underfit and overfit
 # ICC plot is found in the package iarm
 
-#fist install and then load the package iarm if you have not done so yet.
+#first install and then load the package iarm if you have not done so yet.
 
 
 #draw an ICC plot for data.srg and the first item, use method = "score"
 
 ICCplot($$$, itemnumber = , method = "score")
 
-#same using the method = "score"
 
-ICCplot($$$, $$$)
+#same using the method = "cut" and cinumber = 8
+
+ICCplot($$$, $$$, $$$, $$$)
 
 
 #now for item 7 with method = "score" and method "cut", using cinumber = 8
 
 
-#now for item 15 with method = "score" and method "cut"
+#now for item 15 with method = "score" and method "cut", using cinumber = 8
 
 
+#it is maybe difficult to see, but overfit and underfit could
+#be dectected with these curves.
 
   
   
