@@ -1574,7 +1574,7 @@ apply(data.srg, 2, table, useNA = &quot;always&quot;)</code></pre>
 <ol start="5" style="list-style-type: decimal">
 <li>to diminish this effect of the Outfit statistic, the <strong>Mean-Square Infit</strong> adjusts the squared standardized residuals <span class="math inline">\(Z_{ij}^2\)</span>, by their individual variances, <span class="math inline">\(W_{ij}\)</span>:</li>
 </ol>
-<p><span class="math display">\[Infit_{i} = \frac{\Sigma^N_{n=1}W_{ij}Z_{ij}^2}{\Sigma^N_{n=1}W_{ij}}\]</span> The variance is found <span class="math inline">\(W_{ij}\)</span> above, the same for standardizing the residuals.</p>
+<p><span class="math display">\[Infit_{i} = \frac{\Sigma^N_{n=1}W_{ij}Z_{ij}^2}{\Sigma^N_{n=1}W_{ij}}\]</span> The variance <span class="math inline">\(W_{ij}\)</span> is found above, the same for standardizing the residuals.</p>
 <pre class="r"><code># Example : outfit and infit equation in R for the dichotomous case
 library(eRm)
 
