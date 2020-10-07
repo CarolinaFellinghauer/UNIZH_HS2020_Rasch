@@ -1565,7 +1565,7 @@ PCM.srg &lt;- PCM(data.srg)
 ## Find the difficulty parameter of the items (=Location in eRm) and calculate the
 ## mean and sd
 
-i.dif.srg &lt;- PCM.srg$betapar
+i.dif.srg &lt;- PCM.srg$etapar
 mean.dif.srg &lt;- mean(i.dif.srg)
 sd.dif.srg &lt;- sd(i.dif.srg)
 
@@ -1582,7 +1582,7 @@ summary.targeting.srg &lt;- c(Mean_Difficulty = mean.dif.srg, SD_Difficulty = sd
 
 round(summary.targeting.srg, 3)</code></pre>
 <pre><code>Mean_Difficulty   SD_Difficulty  Mean_Abilities    SD_Abilities 
-          0.000           1.271           0.068           1.521 </code></pre>
+          0.016           1.290           0.068           1.521 </code></pre>
 <p>Here the analysis of the targeting shows that scale is well-targeted, the mean abilities of the persons are close to zero and the item difficulties too, of course, as it is the default setting of the analysis.</p>
 </div>
 <div id="visual-analysis" class="section level2">
