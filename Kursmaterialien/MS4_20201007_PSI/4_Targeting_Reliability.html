@@ -1563,10 +1563,16 @@ PCM.srg &lt;- PCM(data.srg)
 
 
 ## Find the difficulty parameter of the items (=Location in eRm) and calculate the
-## mean and sd
+## mean and sd for the mean location of the item difficulties use the
+## parameterization found in the thresholds function and compute the mean location
 
-i.dif.srg &lt;- PCM.srg$etapar
-mean.dif.srg &lt;- mean(i.dif.srg)
+thresh.srg &lt;- thresholds(PCM.srg)
+
+# names(thresh.srg)
+
+# provides the locations
+i.dif.srg &lt;- thresh.srg$threshtable$`1`
+mean.dif.srg &lt;- mean(i.dif.srg[, &quot;Location&quot;])
 sd.dif.srg &lt;- sd(i.dif.srg)
 
 ## Find the ability of the persons and calculate the mean and sd
@@ -1582,7 +1588,7 @@ summary.targeting.srg &lt;- c(Mean_Difficulty = mean.dif.srg, SD_Difficulty = sd
 
 round(summary.targeting.srg, 3)</code></pre>
 <pre><code>Mean_Difficulty   SD_Difficulty  Mean_Abilities    SD_Abilities 
-          0.016           1.290           0.068           1.521 </code></pre>
+          0.310           1.039           0.068           1.521 </code></pre>
 <p>Here the analysis of the targeting shows that scale is well-targeted, the mean abilities of the persons are close to zero and the item difficulties too, of course, as it is the default setting of the analysis.</p>
 </div>
 <div id="visual-analysis" class="section level2">

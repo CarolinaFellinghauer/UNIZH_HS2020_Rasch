@@ -1,5 +1,4 @@
 
-## ---- warning=FALSE, message=FALSE-------------------------------------------------------------
 
 
 #install and load following R-packages  
@@ -35,11 +34,19 @@ PCM.srg = $$$
 
 
 ##Find the difficulty parameter of the items (=Location in eRm) and calculate 
-##the mean and sd
+##for the mean location of the item difficulties use the parameterization found in the thresholds function
+#and compute the mean location
+  
+  
+thresh.srg = thresh$$$
 
-i.dif.srg = $$$
-mean.dif.srg = $$$
+# names(thresh.srg)
+
+#provides the locations
+i.dif.srg  = thresh.srg$$$
+mean.dif.srg = mean($$$
 sd.dif.srg = $$$
+
 
 ##Find the ability of the persons and calculate the mean and sd 
 
