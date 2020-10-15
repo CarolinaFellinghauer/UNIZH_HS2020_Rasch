@@ -1495,17 +1495,12 @@ div.tocify {
 <h4 class="author">~</h4>
 <h4 class="author">Carolina Fellinghauer</h4>
 <h4 class="author"><a href="mailto:carolina.fellinghauer@uzh.ch" class="email">carolina.fellinghauer@uzh.ch</a></h4>
-<h4 class="date">21 4 2020</h4>
+<h4 class="date">21 10 2020</h4>
 
 </div>
 
 
-<pre class="r"><code>library(eRm)
-library(PP)
-library(iarm)
-library(corrplot)
-library(igraph)
-library(R2R)</code></pre>
+<pre class="r"><code>library(eRm)</code></pre>
 <p>and load the Stress Related Growth (SRG) data:</p>
 <pre class="r"><code># get the SRG data set from GitHub
 
@@ -1535,10 +1530,8 @@ data.srg &lt;- srg.data[, srg.items]</code></pre>
 <h1>Local Item Dependency</h1>
 <p>Testing local item dependencies (LID) is important in Rasch analysis. Local independence means that items are not correlated beyond what can be explained by the common underlying latent variable. Items are expected to be conditionally independent given the latent variable. Violations can lead to inflated estimates of reliability and problems with construct validity <span class="citation">(Baghaei 2008)</span>.<br />
 </p>
-<p>The most widely reported fit statistic is the <span class="math inline">\(Q_3\)</span> which is just another name for the correlation between Rasch residuals <span class="citation">(Yen 1984)</span>.<br />
+<p>The most widely reported statistic for the item dependencies is the <span class="math inline">\(Q_3\)</span> matrix which is just another name for the correlation matrix of the Rasch residuals <span class="citation">(Yen 1984)</span>.<br />
 </p>
-<p>Another fit statistic, that only applies to the Rasch model, and is less frequently reported, is the partial gamma coefficient, which is conditioning with respect to a rest score from which only one item has been subtracted <span class="citation">(Kreiner and Christensen 2003)</span>.</p>
-<p>We illustrate both of these approaches.</p>
 </div>
 <div id="diagnostics" class="section level1">
 <h1>Diagnostics</h1>
@@ -1553,7 +1546,7 @@ dim(resid.srg)  # number of rows (persons) and number of columns(items) for the 
 <pre><code>[1] 438  15</code></pre>
 <p>There are residuals for 438 out of 450 cases. In fact, for extreme scores the ability estimate cannot be obtained with the implemented ML item dfficulty estimation method and ability estimates are needed to find the residuals.<br />
 Another reason to exclude persons from the analysis could also be a high number of missing values, but this is not the case in this data.</p>
-<p>If we want a list of the id numbers of the people without residuals, we can get that:</p>
+<p>If we want a list of the id numbers of the people without residuals, we can find them as follows:</p>
 <pre class="r"><code>Rows &lt;- rownames(resid.srg)  # gives the original rownumber preceded with a P
 
 # extracting the rownumber of the excluded persons
@@ -1666,8 +1659,8 @@ SRG14 -0.148  0.024 -0.052  1.000 -0.115
 SRG15 -0.051 -0.138  0.246 -0.115  1.000</code></pre>
 <pre class="r"><code># corrplot(cor.resid.srg) #displays graphically the correlation matrix</code></pre>
 <p>The size of the correlations changed considerably. The correlation between the residuals are much smaller than the regular item correlations. Many are close to zero and many are negative. Negative correlations between residuals are common and especially seen for short scales. Large negative residual correlations can be an indication of multidimensionality of the scale.</p>
-<p>Most studies us cut-off values from 0.2 to 0.3, as a rule of thumb, to decide if the dependency between items is significant. The numeric analysis of the residual correlation matrix implies only to detect the items with dependencies above the chosen cut-off.</p>
-<p>The values in the upper and lower triangle of a correlation matrix are identical, symmetrically to the diagonal. The diagonal represents the item’s auto-correlations of 1. For that reason, to avoid duplicates, values of the upper part of the correlation matrix are observed with the function <code>which()</code>. See code in the examples for <code>?upper.tri</code>.</p>
+<p>Most studies use cut-off values from 0.2 to 0.3, as a rule of thumb, to decide if the dependency between items is significant. The numeric analysis of the residual correlation matrix implies only to detect the items with dependencies above the chosen cut-off.</p>
+<p>The values in the upper and lower triangle of a correlation matrix are identical, symmetrically to the diagonal. The diagonal represents the item’s auto-correlations of 1. For that reason, to avoid duplicates, values of the upper part of the correlation matrix are observed with the function <code>which() and</code>upper.tri()<code>or</code>lower.tri()`.</p>
 <pre class="r"><code>cor.resid.tri &lt;- cor.resid.srg  #to avoid overwritting the original matrix
 
 # setting values of the lower triangle and the diagonal to missing
@@ -1798,32 +1791,20 @@ SRG15 &quot;&quot;    &quot;&quot;
 
 $cut.off
 [1] 0.1310316</code></pre>
-<!-- ## Analysis by partial gamma -->
-<!-- We can test local dependence in a set of items ${x}_{1}$ to ${x}_{k}$ using the _partial gamma_. A general assumption is that, in presence of item independence the probability of each item score $x_{1}$ to $x_{k}$ given a latent trait $\theta$ equals the product of the single item scores given the latent trait   -->
-<!-- $$\mathrm{P}(x_{1}, \dots, x_{k} | \theta) = \prod_{i=1}^{k} \mathrm{P}(x_{i}|\theta)$$ -->
-<!-- A rest score $\mathrm{R}$, which is the raw sum score minus the contribution of item $x_{j}$ is defined as: -->
-<!-- $$\mathrm{R^{(j)}}=\sum_{i \neq j} x_{i}$$ -->
-<!-- The probability of local dependency between item $x_{j}$ and some other item $x_{k}$ given the  -->
-<!-- rest score is defined as the product of the single probabilities of $x_{j}$ and $x_{k}$ given the rest score $\mathrm{R}^{(j)}$. -->
-<!-- $$\mathrm{P}(x_{j}, x_{k} | \mathrm{R^{(j)})=\mathrm{P}(x_{j}| \mathrm{R^{(j)}}) \mathrm{P}(x_{k}| \mathrm{R^{(j)}})} $$ -->
-<!-- $$\mathrm{P}(.|\mathrm{R}^{(j)}) : corr(x_{j},x_{k})=0$$ -->
-<!-- $$\mathrm{P}(.| \mathrm{R}^{(k)}) : corr(x_{j},x_{k})=0$$ -->
-<!-- The partial gamma is implemented in the package `iarm`, details regarding the R-function can be shown by entering `?partgam_LD` in the console. -->
-<!-- ```{r partial_gamma} -->
-<!-- partgam_LD(data.srg, p.adj = "BH") #calculates the partial gamma coefficients -->
-<!-- ``` -->
-<!-- Two tables are shown in the partial gamma output, because it matters which of the items is -->
-<!-- subtracted from the total score to give the rest score. Only positive partial gammas are relevant. Further, only significant partial gammas that show up for both directions are relevant. Still, it seems that the partial gamma approach is even more sensitive and would indicate an additional pair locally dependent items *SRG10: I learned to be open to new information and ideas* and *SRG11: I learned to communicate more honestly with others* ($r = 0.111$). The residual correlation between these two items is just below the cut-off proposed by Christensen & al (here - 0.07 + 0.2 = 0.13). -->
-<!-- # Exercise -->
-<!-- <div class="alert alert-danger">  -->
-<!-- Use the MDS capacity data to investigate if LID items are found in the capacity metric: \ -->
-<!-- a) cut-off of 0.2 \ -->
-<!-- b) cut-off mean Q3 + 0.2 \ -->
-<!-- Which are the two pair of items with the strongest dependency? \ -->
-<!-- Which pair of items are only flagged when using 'Q3star'? \ -->
-<!-- Do you see themes in the correlation pattern? Potential nested latent constructs? -->
-<!-- </div> -->
-<!-- # References -->
+<div class="alert alert-danger">
+<h1 id="exercise">Exercise</h1>
+<p>Use the MDS capacity data to investigate if LID items are found in the capacity metric:<br />
+a) cut-off of 0.2<br />
+b) cut-off mean Q3 + 0.2<br />
+</p>
+<p>Which are the two pair of items with the strongest dependency?<br />
+Which pair of items are only flagged when using ‘Q3star’?<br />
+Do you see themes in the correlation pattern? Potential nested latent constructs?</p>
+</div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
 <div id="refs" class="references">
 <div id="ref-baghaeiLocalDependencyRasch2008">
 <p>Baghaei, P. 2008. “Local Dependency and Rasch Measures.” <em>Rasch Measurement Transactions</em> 21 (3): 1105–6.</p>
@@ -1831,15 +1812,11 @@ $cut.off
 <div id="ref-karlbangchristensenCriticalValuesYen2017">
 <p>Christensen, Karl Bang, Guido Makransky, and Mike Horton. 2017. “Critical Values for Yen’s Q3: Identification of Local Dependence in the Rasch Model Using Residual Correlations.” <em>Applied Psychological Measurement</em> 41 (3): 178–94. <a href="https://doi.org/doi:10.1177/0146621616677520">https://doi.org/doi:10.1177/0146621616677520</a>.</p>
 </div>
-<div id="ref-kreinerAnalysisLocalDependence2003">
-<p>Kreiner, Svend, and Karl Bang Christensen. 2003. <em>Analysis of Local Dependence and Multidimensionality in Graphical Loglinear Rasch Models</em>. Copenhagen: Department of Biostatistics, University of Copenhagen.</p>
-</div>
 <div id="ref-doi:10.1002/9781118574454.ch7">
 <p>Marais, Ida. 2013. “Local Dependence.” In <em>Rasch Models in Health</em>, 111–30. John Wiley &amp; Sons, Ltd. <a href="https://doi.org/10.1002/9781118574454.ch7">https://doi.org/10.1002/9781118574454.ch7</a>.</p>
 </div>
 <div id="ref-doi:10.1177/014662168400800201">
 <p>Yen, Wendy M. 1984. “Effects of Local Item Dependence on the Fit and Equating Performance of the Three-Parameter Logistic Model.” <em>Applied Psychological Measurement</em> 8 (2): 125–45. <a href="https://doi.org/10.1177/014662168400800201">https://doi.org/10.1177/014662168400800201</a>.</p>
-</div>
 </div>
 </div>
 </div>
