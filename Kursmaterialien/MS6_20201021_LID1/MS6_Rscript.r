@@ -6,7 +6,7 @@ $$$
 ## dataload and analysis
   # get the SRG data set from GitHub
 
-urlfile = "https://github.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/blob/master/Data/SRG_Data_Course_UNIZH.csv"
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/SRG_Data_Course_UNIZH.csv"
 
 srg.data = $$$
 
@@ -51,7 +51,7 @@ round(cor.items.srg, digits=2) # rounding to 2 decimals
 
 
 
-## ----correlation of the standardise residuals
+## ----correlation of the standardized residuals
 
 cor.resid.srg = $$$ # residual correlations
 
@@ -64,7 +64,7 @@ round(cor.resid.srg, digits=3) # rounding
 ## ----code_LID----------------------------------------------------------------------------------
 
 
-cor.resid.tri = cor.resid.srg  #to avoid overwritting the original matrix
+cor.resid.tri = cor.resid.srg  #to avoid overwriting the original matrix
 
 # setting values of the lower triangle and the diagonal to missing with lower.tri
 cor.resid.tri[$$$] = NA 

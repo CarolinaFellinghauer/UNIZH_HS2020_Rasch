@@ -1660,7 +1660,7 @@ SRG15 -0.051 -0.138  0.246 -0.115  1.000</code></pre>
 <pre class="r"><code># corrplot(cor.resid.srg) #displays graphically the correlation matrix</code></pre>
 <p>The size of the correlations changed considerably. The correlation between the residuals are much smaller than the regular item correlations. Many are close to zero and many are negative. Negative correlations between residuals are common and especially seen for short scales. Large negative residual correlations can be an indication of multidimensionality of the scale.</p>
 <p>Most studies use cut-off values from 0.2 to 0.3, as a rule of thumb, to decide if the dependency between items is significant. The numeric analysis of the residual correlation matrix implies only to detect the items with dependencies above the chosen cut-off.</p>
-<p>The values in the upper and lower triangle of a correlation matrix are identical, symmetrically to the diagonal. The diagonal represents the item’s auto-correlations of 1. For that reason, to avoid duplicates, values of the upper part of the correlation matrix are observed with the function <code>which() and</code>upper.tri()<code>or</code>lower.tri()`.</p>
+<p>The values in the upper and lower triangle of a correlation matrix are identical, symmetrically to the diagonal. The diagonal represents the item’s auto-correlations of 1. For that reason, to avoid duplicates, values of the upper part of the correlation matrix are observed with the function <code>which()</code> and <code>upper.tri()</code> or <code>lower.tri()</code>.</p>
 <pre class="r"><code>cor.resid.tri &lt;- cor.resid.srg  #to avoid overwritting the original matrix
 
 # setting values of the lower triangle and the diagonal to missing
@@ -1673,7 +1673,7 @@ SRG13  13  15</code></pre>
 </div>
 <div id="visual-analysis" class="section level2">
 <h2>Visual Analysis</h2>
-<p>A visual analysis of the dependencies can be done by mean of an association graph, that highlights items associated above a cut-off. Such a useful function can be found in the package <code>R2R</code> and requires simply the entry of <code>RM</code>or <code>PCM</code> object and the cut-off. Further options for the layout of the figure are also available.</p>
+<p>A visual analysis of the dependencies can be done by mean of an association graph, that highlights items associated above a cut-off. Such a function is found for the moment in <a href="https://github.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/tree/master/RFunctions">Github</a>. The function <code>LIDGraph()</code> requires simply the entry of <code>RM</code>or <code>PCM</code> object and the cut-off, per default the cut-off is set to <span class="math inline">\(Q_3^*\)</span>. Further options for the layout of the figure are also available.</p>
 <pre class="r"><code>urlfunction &lt;- &quot;https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/LIDGraph.R?token=AB5GB42GG6I6YI2MF3KDINC7K5JG6&quot;
 
 source(urlfunction)
@@ -1692,7 +1692,7 @@ Q3.max.srg  #shows the largest Q3 value</code></pre>
 Q3.average.srg  #shows the average residual correlation</code></pre>
 <pre><code>[1] -0.06896837</code></pre>
 <pre class="r"><code># calculates the difference between the largest Q3 value and the average residual
-# correlation; if this value is bigger than .2 this would indicate LD
+# correlation; if this value is bigger than .2 this would indicate LID
 
 Q3.star.srg &lt;- Q3.max.srg - Q3.average.srg
 Q3.star.srg  #shows Q3*</code></pre>
