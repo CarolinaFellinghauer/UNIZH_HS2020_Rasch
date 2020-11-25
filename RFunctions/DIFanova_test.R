@@ -19,7 +19,7 @@ if(is.null(model)==TRUE){stop("specify the model: RM or PCM?")}
 if(is.null(p.adj)==TRUE){p.adj = "none"}
 
   #calls Class_Intervals
-  urlfunction = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Kursmaterialien/MS11_20201125_DIF/Create_Class_Intervals.r"
+  urlfunction = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/Create_Class_Intervals.r"
   source(url(urlfunction))
 
 if(model == "RM"){
