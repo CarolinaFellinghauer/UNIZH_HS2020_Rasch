@@ -116,6 +116,3 @@ NonUniform = add_a_star(NonUniform)
  
 }
 
-DIFit = DIFanova(data = data.srg[,srg.items], 
-                   pf = data.srg$Age_grp, model = "PCM",
-                    nci = 9, p.adj = "BH")
