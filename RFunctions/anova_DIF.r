@@ -65,6 +65,7 @@ anova_DIF = function (dat.items, dat.exo, nci, model = c("RM", "PCM"),
   }
   invisible(capture.output(locn <- PP_gpcm(as.matrix(dat.items), 
                                            t(kk), rep(1, k), type = "wle")[[1]][[1]][, 1]))
+  locn <- round(locn,10)
   score <- apply(dat.items, 1, sum, na.rm = T)
   nonext <- score > 0 & score < m
   locn <- locn[nonext]
