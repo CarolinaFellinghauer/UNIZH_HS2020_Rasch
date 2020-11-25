@@ -5,7 +5,7 @@
 # p.adj = p-value adjustment "holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
 #   "fdr", or "none", the default would be "none"
 
-
+##need the class interval function to be run first ...
 
 DIFanova = function(data = NULL, pf = NULL, model = NULL, nci = NULL, p.adj = NULL){
 
@@ -18,9 +18,6 @@ if(is.null(nci)==TRUE){nci = round(nrow(data)/50)}
 if(is.null(model)==TRUE){stop("specify the model: RM or PCM?")}
 if(is.null(p.adj)==TRUE){p.adj = "none"}
 
-  #calls Class_Intervals
-  urlfunction = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/RFunctions/Create_Class_Intervals.r"
-  source(url(urlfunction))
 
 if(model == "RM"){
   mod1 = RM(data, sum0 = TRUE)
