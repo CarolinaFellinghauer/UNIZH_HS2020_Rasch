@@ -1,22 +1,12 @@
 
 
-Class_Intervals=function(x, breaks){
+Class_Intervals=function(x, breaks, rows_in){
 
   
 #Get the residuals....
   
-Res_PCM=read.csv(file=paste(path_output, "Residuals_PCM.csv", sep=""), header=TRUE, sep=",")[,-1]
- Col_Res_PCM=read.csv(file=paste(path_output, "Residuals_PCM.csv", sep=""), header=TRUE, sep=",")[,1]
- #colnames(Res_PCM)=paste(colnames(Res_PCM), "_res", sep="")
 
-if(substr(Col_Res_PCM,1,1)[1]=="P"){
-  IN=as.numeric(substr(Col_Res_PCM,2,nchar(as.character(Col_Res_PCM))))
-}else{
-  IN=Col_Res_PCM 
-}
-
-
-T=rowSums(x[which(rownames(x)%in%IN==TRUE),],na.rm=TRUE)
+T=rowSums(x[which(rownames(x)%in%rows_in==TRUE),],na.rm=TRUE)
 
 
 S = quantile(T, probs=seq(0,1, 1/breaks), na.rm=TRUE)
