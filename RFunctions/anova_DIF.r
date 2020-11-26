@@ -45,7 +45,10 @@ anova_DIF = function (dat.items, dat.exo, nci, model = c("RM", "PCM"),
                                                                    "holm", "hochberg", "hommel", "bonferroni", 
                                                                    "BY", "none")) 
 {
-  typ <- match.arg(type)
+ 
+  library(PP)
+  
+   typ <- match.arg(type)
   padj <- match.arg(p.adj)
   model <- match.arg(model)
   if (!(typ %in% c("uniform", "nonuniform"))) 
