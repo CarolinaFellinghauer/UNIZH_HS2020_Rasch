@@ -7,34 +7,37 @@ library(PP)
 
 ## Data Load
 
-urlfile = $$$
+urlfile = "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_Rasch/master/Data/SRG_Data_Course_UNIZH.csv"
 
-srg.data = $$$(url(urlfile))
+srg.data = read.csv(url(urlfile))
 
-d$$$
+dim(srg.data)
 colnames(srg.data)
 
 #Items SRG 1 to 15
-
+srg.items = paste("SRG", 1:15, sep = "")
 
 
 #create age groups based < 30 < 45 < 60 < using cut()
 #the break choice here is, admittedly, a bit random
 
-srg.data[, "Age_grp"] = $$$
+#only adult participants
+srg.data = srg.data[-which(srg.data$Age < 18),]
+
+srg.data[, "Age_grp"] = cut(srg.data$Age, breaks = c(0,30,45,60, 85))
 
 # exogenous variables to test DIF for
 srg.pf = c("Age", "Age_grp", "Gender", "Completeness", "para.tetra_1", "traumatic_nontraumatic")
 
 # dataset with  SRG items and the person factors
-data.srg = srg.data[,c($$$, $$$)]
+data.srg = srg.data[,c(srg.items, srg.pf)]
 
 #check response coding (frequencies including missing values) for each SRG-item
 #apply(data.srg, 2, table, useNA="always")
 
 #recode traumatic_nontraumatic = 3 to NA
 
-$$$
+data.srg[which(data.srg$traumatic_nontraumatic == 3),"traumatic_nontraumatic"] = NA 
 
 
 ## ANOVA Funktion---------------
@@ -43,11 +46,11 @@ urldif <- "https://raw.githubusercontent.com/CarolinaFellinghauer/UNIZH_HS2020_R
 source(url(urldif))
 
 ## DIF for Gender : ANOVA of residuals----------------
-DIF.srg.gender = anova_DIF($$$,
-                    $$$, 
-                    model = $$$,
-                    nci = $$$,  #number of score class interval
-                    p.adj=$$$) #correction for multiple testing - advice Benjamini Hochberg
+DIF.srg.gender = anova_DIF(srg.data[,srg.items],
+                    srg.data$Gender, 
+                    model = "PCM",
+                    nci = 9,  #number of score class interval
+                    p.adj= "BH") #correction for multiple testing - advice Benjamini Hochberg
 DIF.srg.gender
 
 

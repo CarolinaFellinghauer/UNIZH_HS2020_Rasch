@@ -1,4 +1,4 @@
-# Description
+  # Description
 # The standardized residuals are analyzed in a 2way anova with score class 
 # and an exogenous variable as the two factors. 
 # Uniform DIF is present if the exogenous variable has a significant effect, 
@@ -68,7 +68,7 @@ anova_DIF = function (dat.items, dat.exo, nci, model = c("RM", "PCM"),
   }
   invisible(capture.output(locn <- PP_gpcm(as.matrix(dat.items), 
                                            t(kk), rep(1, k), type = "wle")[[1]][[1]][, 1]))
-  locn <- round(locn,10)
+  locn <- round(locn,8)
   score <- apply(dat.items, 1, sum, na.rm = T)
   nonext <- score > 0 & score < m
   locn <- locn[nonext]
