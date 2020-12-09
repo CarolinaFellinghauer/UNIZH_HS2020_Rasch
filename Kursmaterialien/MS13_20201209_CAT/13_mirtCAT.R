@@ -80,6 +80,7 @@ result =  mirtCAT(df = df, mo = mirt.srg,
          method = score_function, start_item = start, 
          criteria = next_item,  design = stop, shinyGUI = shinyGUI_list)
 
+#saving the output
 Output = as.matrix(as.character(c(result$demographics$age, result$demographics$gender, result$raw_responses, result$scored_responses, result$thetas, result$SE_thetas), nrow = 1))
 Output = as.data.frame(t(Output))
 colnames(Output) = c("Age", "Gender", paste("SRG_", 1:14, "_lbl", sep = ""), paste("SRG_", 1:14, sep = ""), "Ability", "SE_Ability")
