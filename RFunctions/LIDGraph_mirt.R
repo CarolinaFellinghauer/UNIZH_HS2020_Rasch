@@ -58,7 +58,7 @@ LIDgraph_mirt = function(x, cut = NULL,
                   vertex.color = NULL, vertex.size = NULL, vertex.label.dist = NULL,
                   edge.color = NULL){
  
-  x.1=x
+  x.1=cor(residuals(x, type = "Q3"))
   
   
   if(is.null(cut) == TRUE){cut = mean(x.1[(x.1 < 1)]) + 0.2}
